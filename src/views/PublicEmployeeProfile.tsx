@@ -1,0 +1,783 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Upload, FileText, CheckCircle, ShieldAlert, Trash2, X, Folder, FolderPlus, ChevronLeft, Check, Download, Calendar as CalendarIcon, Clock, Send, Sparkles } from 'lucide-react';
+import type { Employee, EmployeeDocument, TimeOffRequest } from '../types/Employee';
+
+const PublicEmployeeProfile = () => {
+    const { id } = useParams<{ id: string }>();
+    const [employee, setEmployee] = useState<Employee | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
+    const [activeTab, setActiveTab] = useState('Personal');
+
+    const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
+
+    const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
+    const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
+
+    const [isTimeOffModalOpen, setIsTimeOffModalOpen] = useState(false);
+    const [timeOffStartDate, setTimeOffStartDate] = useState('');
+    const [timeOffEndDate, setTimeOffEndDate] = useState('');
+    const [deletingTimeOffId, setDeletingTimeOffId] = useState<string | null>(null);
+
+    const tabs = ['Personal', 'Job', 'Time Off', 'Timesheet', 'Documents', 'Benefits', 'Approval'];
+
+    useEffect(() => {
+        // Simulate an API fetch using the local storage mock DB
+        const saved = localStorage.getItem('vana_employees');
+        if (saved) {
+            try {
+                const employees: Employee[] = JSON.parse(saved);
+                setAllEmployees(employees);
+                const found = employees.find(emp => emp.id === id);
+                if (found) {
+                    setEmployee(found);
+                }
+            } catch (e) {
+                console.error("Failed to parse directory", e);
+            }
+        }
+        setIsLoading(false);
+    }, [id]);
+
+    const pendingApprovals = employee ? allEmployees.reduce((acc, emp) => {
+        if (emp.reportingTo === `${employee.firstName} ${employee.lastName}`) {
+            const pendingReqs = emp.timeOffRequests?.filter(req => req.status === 'Pending') || [];
+            return acc.concat(pendingReqs);
+        }
+        return acc;
+    }, [] as TimeOffRequest[]) : [];
+
+    const handleRequestTimeOff = () => {
+        if (!employee || !timeOffStartDate || !timeOffEndDate) return;
+
+        const newRequest: TimeOffRequest = {
+            id: Math.random().toString(36).substring(2, 9),
+            employeeId: employee.id,
+            employeeName: `${employee.firstName} ${employee.lastName}`,
+            startDate: timeOffStartDate,
+            endDate: timeOffEndDate,
+            status: 'Pending',
+            createdAt: new Date().toISOString()
+        };
+
+        const updatedEmployee = {
+            ...employee,
+            timeOffRequests: [...(employee.timeOffRequests || []), newRequest]
+        };
+
+        const updatedEmployees = allEmployees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
+        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+
+        setEmployee(updatedEmployee);
+        setAllEmployees(updatedEmployees);
+        setIsTimeOffModalOpen(false);
+        setTimeOffStartDate('');
+        setTimeOffEndDate('');
+    };
+
+    const handleDeleteTimeOff = (reqId: string) => {
+        if (!employee) return;
+
+        const updatedReqs = employee.timeOffRequests?.filter(r => r.id !== reqId) || [];
+        const updatedEmployee = { ...employee, timeOffRequests: updatedReqs };
+
+        const updatedEmployees = allEmployees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
+        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+
+        setEmployee(updatedEmployee);
+        setAllEmployees(updatedEmployees);
+        setDeletingTimeOffId(null);
+    };
+
+    const handleApproveRejectRequest = (reqId: string, empId: string, status: 'Approved' | 'Rejected') => {
+        const requestingEmp = allEmployees.find(e => e.id === empId);
+        if (!requestingEmp) return;
+
+        const updatedReqs = requestingEmp.timeOffRequests?.map(r => r.id === reqId ? { ...r, status } : r) || [];
+        const updatedRequestingEmp = { ...requestingEmp, timeOffRequests: updatedReqs };
+
+        const updatedEmployees = allEmployees.map(emp => emp.id === empId ? updatedRequestingEmp : emp);
+        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+        setAllEmployees(updatedEmployees);
+        // If the current profile employee is the one whose request was approved, update the employee state too
+        if (employee?.id === empId) {
+            setEmployee(updatedRequestingEmp);
+        }
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !employee) return;
+
+        setIsUploading(true);
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const newDoc: EmployeeDocument = {
+                id: Math.random().toString(36).substring(2, 9),
+                name: file.name,
+                dataUrl: reader.result as string,
+                uploadedAt: new Date().toISOString(),
+                folderId: activeFolderId || undefined
+            };
+
+            const updatedEmployee = {
+                ...employee,
+                documents: [...(employee.documents || []), newDoc]
+            };
+
+            // Save to local storage DB
+            const saved = localStorage.getItem('vana_employees');
+            if (saved) {
+                const employees: Employee[] = JSON.parse(saved);
+                const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
+                localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+            }
+
+            setEmployee(updatedEmployee);
+            setIsUploading(false);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleCreateFolder = () => {
+        if (!newFolderName.trim() || !employee) return;
+
+        const newFolder = {
+            id: Math.random().toString(36).substring(2, 9),
+            name: newFolderName.trim(),
+            createdAt: new Date().toISOString()
+        };
+
+        const updatedFolders = [...(employee.documentFolders || []), newFolder];
+        const updatedEmployee = { ...employee, documentFolders: updatedFolders };
+
+        // Save to local storage DB
+        const saved = localStorage.getItem('vana_employees');
+        if (saved) {
+            const employees: Employee[] = JSON.parse(saved);
+            const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
+            localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+        }
+
+        setEmployee(updatedEmployee);
+        setNewFolderName('');
+        setIsCreatingFolder(false);
+    };
+
+    const handleDeleteDocument = (docId: string) => {
+        if (!employee) return;
+
+        const updatedDocs = employee.documents?.filter(d => d.id !== docId) || [];
+        const updatedEmployee = { ...employee, documents: updatedDocs };
+
+        // Save to local storage DB
+        const saved = localStorage.getItem('vana_employees');
+        if (saved) {
+            const employees: Employee[] = JSON.parse(saved);
+            const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
+            localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+        }
+
+        setEmployee(updatedEmployee);
+        setDeletingDocId(null);
+    };
+
+    const handleDeleteFolder = (folderId: string) => {
+        if (!employee) return;
+
+        const updatedFolders = employee.documentFolders?.filter(f => f.id !== folderId) || [];
+        const updatedDocs = employee.documents?.filter(d => d.folderId !== folderId) || [];
+
+        const updatedEmployee = {
+            ...employee,
+            documentFolders: updatedFolders,
+            documents: updatedDocs
+        };
+
+        // Save to local storage DB
+        const saved = localStorage.getItem('vana_employees');
+        if (saved) {
+            const employees: Employee[] = JSON.parse(saved);
+            const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
+            localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+        }
+
+        setEmployee(updatedEmployee);
+        setDeletingFolderId(null);
+        if (activeFolderId === folderId) setActiveFolderId(null);
+    };
+
+    if (isLoading) {
+        return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-[#4F7BFE] font-medium">Loading profile...</div>;
+    }
+
+    if (!employee) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
+                <ShieldAlert size={48} className="text-gray-400 mb-4" />
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">Profile Not Found</h1>
+                <p className="text-gray-500 max-w-md">The requested employee profile does not exist or the link has expired. Please contact your HR administrator.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 font-sans">
+            {/* Minimal Header */}
+            <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-center shadow-sm">
+                <div className="w-8 h-8 bg-[#4F7BFE] rounded flex items-center justify-center text-white font-bold tracking-tighter mr-2 relative overflow-hidden">
+                    <span className="relative z-10">V</span>
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-black/10"></div>
+                </div>
+                <span className="text-xl font-bold tracking-tight text-gray-800">Vana HR Partner</span>
+            </header>
+
+            <main className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+                {/* Profile Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#EEF2FF] to-white p-6 sm:p-8 flex items-center gap-6">
+                        {employee.photoUrl ? (
+                            <img src={employee.photoUrl} alt={employee.firstName} className="w-24 h-24 rounded-full object-cover shadow-sm ring-4 ring-white" />
+                        ) : (
+                            <div className="w-24 h-24 rounded-full bg-white text-[#4F7BFE] flex items-center justify-center font-bold text-3xl shadow-sm ring-4 ring-gray-50">
+                                {employee.firstName[0]}{employee.lastName[0]}
+                            </div>
+                        )}
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-1">{employee.firstName} {employee.lastName}</h1>
+                            <p className="text-lg font-medium text-[#4F7BFE]">{employee.jobTitle}</p>
+                            <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 font-medium">
+                                <ShieldAlert size={14} className="text-amber-500" />
+                                <span>Read-Only View</span>
+                            </div>
+                        </div>
+                        <div className="ml-auto">
+                            <button
+                                onClick={() => setIsTimeOffModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#4F7BFE] text-white font-semibold rounded hover:bg-[#3B5BDB] transition-colors"
+                            >
+                                <CalendarIcon size={18} />
+                                Request Time Off
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tabs & Content Container */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    {/* Tabs */}
+                    <div className="bg-[#2744A0] px-6 flex items-end shrink-0 pt-2 shadow-inner overflow-x-auto">
+                        {tabs.map(tab => {
+                            const showBadge = tab === 'Approval' && pendingApprovals.length > 0;
+                            return (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-5 py-2.5 font-medium text-sm transition-colors cursor-pointer focus:outline-none whitespace-nowrap flex items-center gap-2 ${activeTab === tab
+                                        ? 'bg-white text-[#2744A0] rounded-t-lg'
+                                        : 'text-white/90 hover:bg-white/20 hover:text-white hover:rounded-t-lg'
+                                        }`}
+                                >
+                                    {tab}
+                                    {showBadge && (
+                                        <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                            {pendingApprovals.length}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="bg-white">
+                        {activeTab === 'Personal' && (
+                            <div className="p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                                    <p className="text-gray-900 font-medium">{employee.email}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Department</p>
+                                    <p className="text-gray-900 font-medium">{employee.department}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Location</p>
+                                    <p className="text-gray-900 font-medium">{employee.location}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Hire Date</p>
+                                    <p className="text-gray-900 font-medium">{employee.hireDate}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Employment Status</p>
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {employee.employmentStatus}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                                    <span className={`inline-block mt-1 px-3 py-1 text-sm font-medium rounded-full ${employee.status === 'Inactive' ? 'bg-red-100 text-red-700' : 'bg-[#E8F5E9] text-[#4CAF50]'}`}>
+                                        {employee.status || 'Active'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Manager</p>
+                                    <p className="text-gray-900 font-medium">{employee.reportingTo}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bank Name</p>
+                                    <p className="text-gray-900 font-medium">{employee.bankName || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bank Account Number</p>
+                                    <p className="text-gray-900 font-medium">{employee.bankAccountNumber ? `••••${employee.bankAccountNumber.slice(-4)}` : 'Not provided'}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'Documents' && (
+                            <div>
+                                <div className="p-6 sm:p-8 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-lg font-bold text-gray-900">Requested Documents</h2>
+                                        <p className="text-sm text-gray-500 mt-1">Upload files requested by HR (e.g. ID, Tax Forms). These will be securely attached to your profile.</p>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {!activeFolderId ? (
+                                            <>
+                                                {isCreatingFolder ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={newFolderName}
+                                                            onChange={(e) => setNewFolderName(e.target.value)}
+                                                            placeholder="Folder name"
+                                                            className="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-[#4F7BFE] w-32 sm:w-40"
+                                                            autoFocus
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
+                                                        />
+                                                        <button onClick={handleCreateFolder} className="p-1.5 bg-[#4F7BFE] text-white rounded hover:bg-[#3B5BDB]">
+                                                            <Check size={16} />
+                                                        </button>
+                                                        <button onClick={() => { setIsCreatingFolder(false); setNewFolderName(''); }} className="p-1.5 bg-gray-200 text-gray-600 rounded hover:bg-gray-300">
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setIsCreatingFolder(true)}
+                                                        className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        <FolderPlus size={16} /> New Folder
+                                                    </button>
+                                                )}
+
+                                                <div className="relative overflow-hidden group">
+                                                    <button disabled={isUploading} className="flex items-center gap-2 px-4 py-2 bg-[#4F7BFE] text-white text-sm font-semibold rounded hover:bg-[#3B5BDB] transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-[#4F7BFE] disabled:opacity-50">
+                                                        <Upload size={16} />
+                                                        {isUploading ? 'Uploading...' : 'Upload File'}
+                                                    </button>
+                                                    <input
+                                                        type="file"
+                                                        onChange={handleFileUpload}
+                                                        disabled={isUploading}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                                        title="Click to upload document"
+                                                    />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="relative overflow-hidden group">
+                                                <button disabled={isUploading} className="flex items-center gap-2 px-4 py-2 bg-[#4F7BFE] text-white text-sm font-semibold rounded hover:bg-[#3B5BDB] transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-[#4F7BFE] disabled:opacity-50">
+                                                    <Upload size={16} />
+                                                    {isUploading ? 'Uploading...' : 'Upload File'}
+                                                </button>
+                                                <input
+                                                    type="file"
+                                                    onChange={handleFileUpload}
+                                                    disabled={isUploading}
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                                    title="Click to upload document"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {activeFolderId && (
+                                    <div className="px-6 sm:px-8 pt-6 pb-2 flex items-center gap-2 text-gray-600">
+                                        <button
+                                            onClick={() => setActiveFolderId(null)}
+                                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-md transition-colors"
+                                            title="Back to Folders"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <Folder size={20} className="text-gray-400 fill-current" />
+                                        <span className="font-bold text-lg text-gray-900">{employee.documentFolders?.find(f => f.id === activeFolderId)?.name || 'Folder'}</span>
+                                    </div>
+                                )}
+
+                                <div className="p-6 sm:p-8">
+                                    {!activeFolderId && employee.documentFolders && employee.documentFolders.length > 0 && (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                                            {employee.documentFolders.map(folder => {
+                                                const itemCnt = employee.documents?.filter(d => d.folderId === folder.id).length || 0;
+                                                return (
+                                                    <div
+                                                        key={folder.id}
+                                                        onClick={() => setActiveFolderId(folder.id)}
+                                                        className="p-5 rounded-xl bg-white border border-gray-200 hover:border-[#4F7BFE] hover:shadow-md transition-all cursor-pointer group flex flex-col items-center justify-center text-center text-gray-700 h-32 relative"
+                                                    >
+                                                        {deletingFolderId === folder.id ? (
+                                                            <div className="absolute inset-0 bg-white/95 rounded-xl flex flex-col items-center justify-center z-10 p-2 gap-2" onClick={(e) => e.stopPropagation()}>
+                                                                <span className="text-sm text-red-600 font-bold text-center">Delete folder?</span>
+                                                                <div className="flex gap-2 text-sm">
+                                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }} className="px-3 py-1.5 bg-red-500 text-white font-bold rounded hover:bg-red-600 transition-colors">Yes</button>
+                                                                    <button onClick={(e) => { e.stopPropagation(); setDeletingFolderId(null); }} className="px-3 py-1.5 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300 transition-colors">No</button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setDeletingFolderId(folder.id);
+                                                                }}
+                                                                className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-all focus:outline-none"
+                                                                title="Delete Folder"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                        <Folder size={44} className="text-gray-300 group-hover:text-[#4F7BFE] mb-3 fill-current transition-colors" />
+                                                        <p className="text-sm font-bold truncate w-full px-2 text-gray-900" title={folder.name}>{folder.name}</p>
+                                                        <p className="text-xs text-gray-500 font-medium">{itemCnt} item{itemCnt !== 1 ? 's' : ''}</p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {(() => {
+                                        const displayedDocs = employee.documents?.filter(d =>
+                                            activeFolderId ? d.folderId === activeFolderId : !d.folderId
+                                        ) || [];
+
+                                        return displayedDocs.length > 0 ? (
+                                            <ul className="space-y-3">
+                                                {displayedDocs.map(doc => (
+                                                    <li key={doc.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                                                                <FileText size={20} />
+                                                            </div>
+                                                            <div className="truncate">
+                                                                <p className="text-sm font-medium text-gray-900 truncate" title={doc.name}>{doc.name}</p>
+                                                                <p className="text-xs text-gray-500">Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {deletingDocId === doc.id ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs text-red-600 font-medium hidden sm:inline">Delete?</span>
+                                                                <button onClick={() => handleDeleteDocument(doc.id)} className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 transition-colors">
+                                                                    Yes
+                                                                </button>
+                                                                <button onClick={() => setDeletingDocId(null)} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
+                                                                    <X size={14} />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="flex items-center gap-1.5 text-[#4F7BFE] hidden sm:flex">
+                                                                    <CheckCircle size={16} />
+                                                                    <span className="text-xs font-semibold">Received</span>
+                                                                </div>
+                                                                <a
+                                                                    href={doc.dataUrl}
+                                                                    download={doc.name}
+                                                                    className="p-1.5 text-gray-400 hover:text-[#4F7BFE] hover:bg-[#EEF2FF] rounded-full transition-colors ml-1"
+                                                                    title="Download Document"
+                                                                >
+                                                                    <Download size={16} />
+                                                                </a>
+                                                                <button
+                                                                    onClick={() => setDeletingDocId(doc.id)}
+                                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors ml-1"
+                                                                    title="Delete Document"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <div className="text-center py-10 px-4 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+                                                <FileText size={32} className="mx-auto text-gray-300 mb-3" />
+                                                <p className="text-sm font-medium text-gray-600">No documents in this section yet</p>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'Time Off' && (() => {
+                            // Calculate start of today for comparisons
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            const approvedRequests = employee.timeOffRequests?.filter(r => r.status === 'Approved') || [];
+
+                            const upcomingRequests = approvedRequests.filter(req => {
+                                const endDate = new Date(req.endDate);
+                                endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset());
+                                endDate.setHours(0, 0, 0, 0);
+                                return endDate >= today;
+                            }).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+                            const historyRequests = approvedRequests.filter(req => {
+                                const endDate = new Date(req.endDate);
+                                endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset());
+                                endDate.setHours(0, 0, 0, 0);
+                                return endDate < today;
+                            }).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()); // Sort descending for history
+
+                            return (
+                                <div className="p-6 sm:p-8 space-y-10">
+                                    {/* Upcoming Time Off Section */}
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
+                                            <Clock size={20} className="text-gray-900" />
+                                            <h2 className="text-lg font-bold text-gray-900">Upcoming Time Off</h2>
+                                        </div>
+                                        <div className="space-y-0">
+                                            {upcomingRequests.length > 0 ? (
+                                                upcomingRequests.map(req => {
+                                                    const start = new Date(req.startDate);
+                                                    start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
+                                                    const end = new Date(req.endDate);
+                                                    end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+                                                    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+                                                    const dateStr = start.getTime() === end.getTime()
+                                                        ? start.toLocaleDateString(undefined, options)
+                                                        : `${start.toLocaleDateString(undefined, options)} - ${end.toLocaleDateString(undefined, options)}`;
+
+                                                    return (
+                                                        <div key={req.id} className="flex items-center justify-between py-4 border-b border-gray-100 last:border-0 group">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="text-green-600">
+                                                                    <Sparkles size={24} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-gray-900">{dateStr}</p>
+                                                                    <p className="text-sm text-gray-500">Approved Time Off</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                {deletingTimeOffId === req.id ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-xs text-red-600 font-medium hidden sm:inline">Cancel?</span>
+                                                                        <button onClick={() => handleDeleteTimeOff(req.id)} className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 transition-colors">
+                                                                            Yes
+                                                                        </button>
+                                                                        <button onClick={() => setDeletingTimeOffId(null)} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
+                                                                            <X size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => setDeletingTimeOffId(req.id)}
+                                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                                        title="Cancel Time Off"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })
+                                            ) : (
+                                                <p className="text-gray-500 py-4">No upcoming approved time off.</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* History Section */}
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-900">
+                                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                                <path d="M3 3v5h5" />
+                                                <path d="M12 7v5l4 2" />
+                                            </svg>
+                                            <h2 className="text-lg font-bold text-gray-900">History</h2>
+                                        </div>
+                                        <div className="space-y-0">
+                                            {historyRequests.length > 0 ? (
+                                                <div className="w-full">
+                                                    <div className="grid grid-cols-12 gap-4 py-3 bg-gray-100 rounded-t-md px-4 text-sm font-bold text-gray-600 border-b border-gray-200">
+                                                        <div className="col-span-3 lg:col-span-2">Date</div>
+                                                        <div className="col-span-6 lg:col-span-8">Description</div>
+                                                        <div className="col-span-3 lg:col-span-2 text-right">Status</div>
+                                                    </div>
+                                                    {historyRequests.map(req => {
+                                                        const start = new Date(req.startDate);
+                                                        start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
+                                                        const end = new Date(req.endDate);
+                                                        end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+
+                                                        const dateStr = start.getTime() === end.getTime()
+                                                            ? start.toLocaleDateString()
+                                                            : `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+
+                                                        return (
+                                                            <div key={req.id} className="grid grid-cols-12 gap-4 py-4 px-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors items-center text-sm">
+                                                                <div className="col-span-3 lg:col-span-2 font-medium text-gray-900">
+                                                                    {dateStr}
+                                                                </div>
+                                                                <div className="col-span-6 lg:col-span-8">
+                                                                    <p className="font-bold text-gray-800">Vacation</p>
+                                                                    <p className="text-xs text-gray-500 mt-0.5 border border-orange-300 bg-orange-50 text-orange-800 inline-block px-1 rounded">Approved Time Off</p>
+                                                                </div>
+                                                                <div className="col-span-3 lg:col-span-2 text-right">
+                                                                    <span className="text-gray-500 line-through text-xs font-semibold uppercase">Taken</span>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-500 py-4">No time off history.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {activeTab === 'Approval' && (
+                            <div className="p-6 sm:p-8">
+                                <h2 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">Pending Time Off Requests</h2>
+                                {pendingApprovals.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {pendingApprovals.map(req => {
+                                            const startStr = req.startDate;
+                                            const endStr = req.endDate;
+                                            return (
+                                                <div key={req.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-4 bg-gray-50">
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">{req.employeeName}</p>
+                                                        <p className="text-sm text-gray-600 mt-1">Requested to be off from <strong className="text-gray-900">{startStr}</strong> to <strong className="text-gray-900">{endStr}</strong>.</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleApproveRejectRequest(req.id, req.employeeId, 'Approved')}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white font-bold rounded hover:bg-green-600 transition-colors"
+                                                        >
+                                                            <Check size={16} /> Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleApproveRejectRequest(req.id, req.employeeId, 'Rejected')}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 font-bold rounded hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            <X size={16} /> Reject
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-10 px-4 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+                                        <CheckCircle size={32} className="mx-auto text-green-500 mb-3" />
+                                        <p className="text-sm font-medium text-gray-600">You're all caught up! No pending approvals.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {['Job', 'Timesheet', 'Benefits'].includes(activeTab) && (
+                            <div className="text-center py-12">
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">{activeTab}</h3>
+                                <p className="text-gray-500">This section is currently under construction.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </main>
+
+            {/* Time Off Modal */}
+            {isTimeOffModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <CalendarIcon size={20} className="text-[#4F7BFE]" />
+                                Request Time Off
+                            </h2>
+                            <button onClick={() => setIsTimeOffModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-5">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Start Date</label>
+                                <input
+                                    type="date"
+                                    value={timeOffStartDate}
+                                    onChange={(e) => {
+                                        setTimeOffStartDate(e.target.value);
+                                        if (timeOffEndDate && e.target.value > timeOffEndDate) {
+                                            setTimeOffEndDate(e.target.value);
+                                        }
+                                    }}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:border-[#4F7BFE] focus:ring-1 focus:ring-[#4F7BFE] transition-shadow shadow-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">End Date</label>
+                                <input
+                                    type="date"
+                                    value={timeOffEndDate}
+                                    onChange={(e) => setTimeOffEndDate(e.target.value)}
+                                    min={timeOffStartDate}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:border-[#4F7BFE] focus:ring-1 focus:ring-[#4F7BFE] transition-shadow shadow-sm"
+                                />
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                            <button
+                                onClick={() => setIsTimeOffModalOpen(false)}
+                                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRequestTimeOff}
+                                disabled={!timeOffStartDate || !timeOffEndDate}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#4F7BFE] text-white font-bold rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                            >
+                                <Send size={16} />
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default PublicEmployeeProfile;
