@@ -28,10 +28,13 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
     });
     const [sendOnboardingEmail, setSendOnboardingEmail] = useState(false);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
         // Auto generate ID and pass back to parent
         const newEmployee: Employee = {
@@ -40,8 +43,22 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         };
 
         if (sendOnboardingEmail && formData.email) {
-            const subject = encodeURIComponent('Welcome!');
-            window.location.href = `mailto:${formData.email}?subject=${subject}`;
+            try {
+                const response = await fetch('/api/send-onboarding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: formData.email,
+                        firstName: formData.firstName
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error("Failed to send onboarding email via API");
+                }
+            } catch (error) {
+                console.error("Error sending onboarding email:", error);
+            }
         }
 
         onAdd(newEmployee);
@@ -54,6 +71,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             bankName: '', bankAccountNumber: '', photoUrl: '', hrDocuments: []
         });
         setSendOnboardingEmail(false);
+        setIsSubmitting(false);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -272,11 +290,11 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                             <span className="text-sm font-medium text-gray-700 select-none">Send Onboarding Email</span>
                         </label>
                         <div className="flex space-x-3">
-                            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4F7BFE]">
+                            <button type="button" onClick={onClose} disabled={isSubmitting} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4F7BFE] disabled:opacity-50">
                                 Cancel
                             </button>
-                            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-[#4F7BFE] border border-transparent rounded-md hover:bg-[#3B5BDB] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4F7BFE]">
-                                Save Employee
+                            <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm font-medium text-white bg-[#4F7BFE] border border-transparent rounded-md hover:bg-[#3B5BDB] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4F7BFE] disabled:opacity-50 flex items-center justify-center">
+                                {isSubmitting ? 'Saving...' : 'Save Employee'}
                             </button>
                         </div>
                     </div>
