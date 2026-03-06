@@ -24,7 +24,28 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         bankName: '',
         bankAccountNumber: '',
         photoUrl: '',
-        hrDocuments: []
+        hrDocuments: [],
+        nationalId: '',
+        dateOfBirth: '',
+        taxId: '',
+        phoneNumber: '',
+        homeAddress: '',
+        nationality: '',
+        personalEmail: '',
+        maritalStatus: '',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+        emergencyContactRelationship: '',
+        bankAccountType: '',
+        igssAffiliation: '',
+        gender: '',
+        medicalConditions: '',
+        profession: '',
+        academicLevel: '',
+        degreeTitle: '',
+        bloodType: '',
+        tShirtSize: '',
+        contractingCompany: ''
     });
     const [sendOnboardingEmail, setSendOnboardingEmail] = useState(false);
 
@@ -68,7 +89,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         setFormData({
             firstName: '', lastName: '', email: '', hireDate: '', employmentStatus: 'Full Time',
             department: 'HR', location: '', jobTitle: '', reportingTo: '', status: 'Active',
-            bankName: '', bankAccountNumber: '', photoUrl: '', hrDocuments: []
+            bankName: '', bankAccountNumber: '', photoUrl: '', hrDocuments: [],
+            nationalId: '', dateOfBirth: '', taxId: '', phoneNumber: '', homeAddress: '', nationality: '', personalEmail: '', maritalStatus: '', emergencyContactName: '', emergencyContactPhone: '', emergencyContactRelationship: '', bankAccountType: '', igssAffiliation: '', gender: '', medicalConditions: '', profession: '', academicLevel: '', degreeTitle: '', bloodType: '', tShirtSize: '', contractingCompany: ''
         });
         setSendOnboardingEmail(false);
         setIsSubmitting(false);
@@ -210,6 +232,147 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Bank Account Number</label>
                                 <input name="bankAccountNumber" value={formData.bankAccountNumber} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" placeholder="Account Number" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Bank Account Type</label>
+                                <select name="bankAccountType" value={formData.bankAccountType} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Account Type</option>
+                                    <option value="Monetaria">Monetaria</option>
+                                    <option value="Ahorro">Ahorro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">National ID (DPI/DNI)</label>
+                                <input name="nationalId" value={formData.nationalId} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID (NIT)</label>
+                                <input name="taxId" value={formData.taxId} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                                <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                                <select name="nationality" value={formData.nationality} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Nationality</option>
+                                    <option value="Guatemalteca">Guatemalteca</option>
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Mexicana">Mexicana</option>
+                                    <option value="Hondureña">Hondureña</option>
+                                    <option value="Colombiana">Colombiana</option>
+                                    <option value="Salvadoreña">Salvadoreña</option>
+                                    <option value="Nicaragüense">Nicaragüense</option>
+                                    <option value="Española">Española</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                <select name="gender" value={formData.gender} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Gender</option>
+                                    <option value="Hombre">Hombre</option>
+                                    <option value="Mujer">Mujer</option>
+                                    <option value="Prefiero no decirlo">Prefiero no decirlo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
+                                <select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Marital Status</option>
+                                    <option value="Soltero">Soltero</option>
+                                    <option value="Casado">Casado</option>
+                                    <option value="Divorciado">Divorciado</option>
+                                    <option value="Viudo">Viudo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Blood Type</label>
+                                <select name="bloodType" value={formData.bloodType} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Blood Type</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="No sé">No sé</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">T-Shirt Size</label>
+                                <select name="tShirtSize" value={formData.tShirtSize} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Size</option>
+                                    <option value="XS">XS</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Home Address</label>
+                                <input name="homeAddress" value={formData.homeAddress} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Personal Email</label>
+                                <input type="email" name="personalEmail" value={formData.personalEmail} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Name</label>
+                                <input name="emergencyContactName" value={formData.emergencyContactName} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
+                                <input name="emergencyContactPhone" value={formData.emergencyContactPhone} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Relationship</label>
+                                <input name="emergencyContactRelationship" value={formData.emergencyContactRelationship} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">IGSS Affiliation Number</label>
+                                <input name="igssAffiliation" value={formData.igssAffiliation} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Medical Conditions (Allergies, etc.)</label>
+                                <input name="medicalConditions" value={formData.medicalConditions} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" placeholder="Leave blank if none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                                <input name="profession" value={formData.profession} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Academic Level</label>
+                                <select name="academicLevel" value={formData.academicLevel} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Level</option>
+                                    <option value="Diversificado">Diversificado</option>
+                                    <option value="Técnico">Técnico</option>
+                                    <option value="Universidad incompleta">Universidad incompleta</option>
+                                    <option value="Estudiante regular">Estudiante regular</option>
+                                    <option value="Pensum cerrado">Pensum cerrado</option>
+                                    <option value="Graduado">Graduado</option>
+                                    <option value="Postgrado">Postgrado</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Degree Title</label>
+                                <input name="degreeTitle" value={formData.degreeTitle} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Contracting Company</label>
+                                <select name="contractingCompany" value={formData.contractingCompany} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                    <option value="">Select Company</option>
+                                    <option value="Compa Labs Guatemala">Compa Labs Guatemala</option>
+                                    <option value="Vana Trust y Vana GT">Vana Trust y Vana GT</option>
+                                    <option value="Comun">Comun</option>
+                                </select>
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Employee Photo (Optional)</label>
