@@ -44,4 +44,27 @@ export interface Employee {
     hrDocuments?: EmployeeDocument[]; // Support for HR specific documents
     hrDocumentFolders?: DocumentFolder[]; // Support for grouping HR documents into folders
     timeOffRequests?: TimeOffRequest[]; // Support for time off requests
+
+    // Onboarding form fields
+    nationalId?: string; // DPI/DNI
+    dateOfBirth?: string;
+    taxId?: string; // NIT
+    phoneNumber?: string;
+    homeAddress?: string;
+    nationality?: string;
+    personalEmail?: string;
+    maritalStatus?: 'Soltero' | 'Casado' | 'Unido' | string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    emergencyContactRelationship?: string;
+    bankAccountType?: 'Monetaria' | 'Ahorro' | 'N/A' | string;
+    igssAffiliation?: string;
+    gender?: 'Femenino' | 'Masculino' | string;
+    medicalConditions?: string; // Enfermedades/Alergias
+    profession?: string; // Profesión u Oficio
+    academicLevel?: 'Básicos' | 'Diversificado' | 'Técnico' | 'Licenciatura' | 'Maestría' | 'Doctorado' | string;
+    degreeTitle?: string; // Título obtenido
+    bloodType?: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'Desconozco' | string;
+    tShirtSize?: 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'XXXL' | 'XXXXL' | string;
+    contractingCompany?: 'Vana' | 'Easy' | 'Krece' | 'Vana Card' | string;
 }

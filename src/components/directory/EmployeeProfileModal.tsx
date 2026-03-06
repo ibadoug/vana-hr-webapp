@@ -472,6 +472,238 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
                                     )}
                                 </div>
 
+                                {/* New Fields Added from Onboarding Form */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Bank Account Type</label>
+                                    {isEditing ? (
+                                        <select name="bankAccountType" value={formData.bankAccountType || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="Monetaria">Monetaria</option>
+                                            <option value="Ahorro">Ahorro</option>
+                                            <option value="N/A">N/A (Extranjeros)</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.bankAccountType || 'Not provided'}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">National ID (DPI/DNI)</label>
+                                    {isEditing ? (
+                                        <input name="nationalId" value={formData.nationalId || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.nationalId || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tax ID (NIT)</label>
+                                    {isEditing ? (
+                                        <input name="taxId" value={formData.taxId || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.taxId || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Date of Birth</label>
+                                    {isEditing ? (
+                                        <input type="date" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.dateOfBirth || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nationality</label>
+                                    {isEditing ? (
+                                        <select name="nationality" value={formData.nationality || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="GT">GT</option>
+                                            <option value="DO">DO</option>
+                                            <option value="HN">HN</option>
+                                            <option value="ARG">ARG</option>
+                                            <option value="COL">COL</option>
+                                            <option value="PE">PE</option>
+                                            <option value="UY">UY</option>
+                                            <option value="VZ">VZ</option>
+                                            <option value="BO">BO</option>
+                                            <option value="EC">EC</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.nationality || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Gender</label>
+                                    {isEditing ? (
+                                        <select name="gender" value={formData.gender || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="Femenino">Femenino</option>
+                                            <option value="Masculino">Masculino</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.gender || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Marital Status</label>
+                                    {isEditing ? (
+                                        <select name="maritalStatus" value={formData.maritalStatus || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="Soltero">Soltero</option>
+                                            <option value="Casado">Casado</option>
+                                            <option value="Unido">Unido</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.maritalStatus || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Blood Type</label>
+                                    {isEditing ? (
+                                        <select name="bloodType" value={formData.bloodType || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="A+">A+</option>
+                                            <option value="A-">A-</option>
+                                            <option value="B+">B+</option>
+                                            <option value="B-">B-</option>
+                                            <option value="AB+">AB+</option>
+                                            <option value="AB-">AB-</option>
+                                            <option value="O+">O+</option>
+                                            <option value="O-">O-</option>
+                                            <option value="Desconozco">Desconozco</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.bloodType || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">T-Shirt Size</label>
+                                    {isEditing ? (
+                                        <select name="tShirtSize" value={formData.tShirtSize || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="XS">XS</option>
+                                            <option value="S">S</option>
+                                            <option value="M">M</option>
+                                            <option value="L">L</option>
+                                            <option value="XL">XL</option>
+                                            <option value="XXL">XXL</option>
+                                            <option value="XXXL">XXXL</option>
+                                            <option value="XXXXL">XXXXL</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.tShirtSize || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone Number</label>
+                                    {isEditing ? (
+                                        <input name="phoneNumber" value={formData.phoneNumber || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.phoneNumber || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Home Address</label>
+                                    {isEditing ? (
+                                        <input name="homeAddress" value={formData.homeAddress || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.homeAddress || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Personal Email</label>
+                                    {isEditing ? (
+                                        <input name="personalEmail" type="email" value={formData.personalEmail || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.personalEmail || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Emergency Contact Name</label>
+                                    {isEditing ? (
+                                        <input name="emergencyContactName" value={formData.emergencyContactName || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.emergencyContactName || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Emergency Contact Phone</label>
+                                    {isEditing ? (
+                                        <input name="emergencyContactPhone" value={formData.emergencyContactPhone || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.emergencyContactPhone || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Emergency Contact Relationship</label>
+                                    {isEditing ? (
+                                        <input name="emergencyContactRelationship" value={formData.emergencyContactRelationship || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.emergencyContactRelationship || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">IGSS Affiliation</label>
+                                    {isEditing ? (
+                                        <input name="igssAffiliation" value={formData.igssAffiliation || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.igssAffiliation || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Medical Conditions (Allergies, etc)</label>
+                                    {isEditing ? (
+                                        <input name="medicalConditions" value={formData.medicalConditions || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.medicalConditions || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Profession</label>
+                                    {isEditing ? (
+                                        <input name="profession" value={formData.profession || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.profession || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Academic Level</label>
+                                    {isEditing ? (
+                                        <select name="academicLevel" value={formData.academicLevel || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="Básicos">Básicos</option>
+                                            <option value="Diversificado">Diversificado</option>
+                                            <option value="Técnico">Técnico</option>
+                                            <option value="Licenciatura">Licenciatura</option>
+                                            <option value="Maestría">Maestría</option>
+                                            <option value="Doctorado">Doctorado</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.academicLevel || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Degree Title</label>
+                                    {isEditing ? (
+                                        <input name="degreeTitle" value={formData.degreeTitle || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.degreeTitle || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Contracting Company</label>
+                                    {isEditing ? (
+                                        <select name="contractingCompany" value={formData.contractingCompany || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select...</option>
+                                            <option value="Vana">Vana</option>
+                                            <option value="Easy">Easy</option>
+                                            <option value="Krece">Krece</option>
+                                            <option value="Vana Card">Vana Card</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.contractingCompany || 'Not provided'}</p>
+                                    )}
+                                </div>
+
                                 {isEditing && (
                                     <div className="md:col-span-2 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Employee Photo</label>

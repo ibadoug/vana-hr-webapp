@@ -338,6 +338,90 @@ const PublicEmployeeProfile = () => {
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bank Account Number</p>
                                     <p className="text-gray-900 font-medium">{employee.bankAccountNumber ? `••••${employee.bankAccountNumber.slice(-4)}` : 'Not provided'}</p>
                                 </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bank Account Type</p>
+                                    <p className="text-gray-900 font-medium">{employee.bankAccountType || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">National ID (DPI/DNI)</p>
+                                    <p className="text-gray-900 font-medium">{employee.nationalId || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Tax ID (NIT)</p>
+                                    <p className="text-gray-900 font-medium">{employee.taxId || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Date of Birth</p>
+                                    <p className="text-gray-900 font-medium">{employee.dateOfBirth || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Nationality</p>
+                                    <p className="text-gray-900 font-medium">{employee.nationality || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Gender</p>
+                                    <p className="text-gray-900 font-medium">{employee.gender || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Marital Status</p>
+                                    <p className="text-gray-900 font-medium">{employee.maritalStatus || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Blood Type</p>
+                                    <p className="text-gray-900 font-medium">{employee.bloodType || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">T-Shirt Size</p>
+                                    <p className="text-gray-900 font-medium">{employee.tShirtSize || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Phone Number</p>
+                                    <p className="text-gray-900 font-medium">{employee.phoneNumber || 'Not provided'}</p>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Home Address</p>
+                                    <p className="text-gray-900 font-medium">{employee.homeAddress || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Personal Email</p>
+                                    <p className="text-gray-900 font-medium">{employee.personalEmail || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Emergency Contact Name</p>
+                                    <p className="text-gray-900 font-medium">{employee.emergencyContactName || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Emergency Contact Phone</p>
+                                    <p className="text-gray-900 font-medium">{employee.emergencyContactPhone || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Emergency Contact Relationship</p>
+                                    <p className="text-gray-900 font-medium">{employee.emergencyContactRelationship || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">IGSS Affiliation</p>
+                                    <p className="text-gray-900 font-medium">{employee.igssAffiliation || 'Not provided'}</p>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Medical Conditions</p>
+                                    <p className="text-gray-900 font-medium">{employee.medicalConditions || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Profession</p>
+                                    <p className="text-gray-900 font-medium">{employee.profession || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Academic Level</p>
+                                    <p className="text-gray-900 font-medium">{employee.academicLevel || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Degree Title</p>
+                                    <p className="text-gray-900 font-medium">{employee.degreeTitle || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contracting Company</p>
+                                    <p className="text-gray-900 font-medium">{employee.contractingCompany || 'Not provided'}</p>
+                                </div>
                             </div>
                         )}
 
