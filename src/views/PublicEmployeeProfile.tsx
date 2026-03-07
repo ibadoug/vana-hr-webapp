@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Upload, FileText, CheckCircle, ShieldAlert, Trash2, X, Folder, FolderPlus, ChevronLeft, Check, Download, Calendar as CalendarIcon, Clock, Send, Sparkles } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import type { Employee, EmployeeDocument, TimeOffRequest } from '../types/Employee';
 
 const PublicEmployeeProfile = () => {
@@ -30,59 +31,129 @@ const PublicEmployeeProfile = () => {
     const tabs = isOnboardingSetup ? ['Setup Required', 'Documents'] : ['Personal', 'Job', 'Time Off', 'Timesheet', 'Documents', 'Benefits', 'Approval'];
 
     useEffect(() => {
-        // Simulate an API fetch using the local storage mock DB
-        let employees: Employee[] = [];
-        const saved = localStorage.getItem('vana_employees');
-        if (saved) {
+        const fetchAll = async () => {
+            if (!id) return;
             try {
-                employees = JSON.parse(saved);
-            } catch (e) {
-                console.error("Failed to parse directory", e);
-            }
-        }
+                const { data: allData } = await supabase.from('employees').select('*');
+                if (allData) {
+                    const formattedAll = allData.map(emp => ({
+                        id: emp.id,
+                        firstName: emp.first_name,
+                        lastName: emp.last_name,
+                        email: emp.email,
+                        hireDate: emp.hire_date,
+                        employmentStatus: emp.employment_status,
+                        department: emp.department,
+                        location: emp.location,
+                        jobTitle: emp.job_title,
+                        reportingTo: emp.reporting_to,
+                        status: emp.status,
+                        bankName: emp.bank_name,
+                        bankAccountNumber: emp.bank_account_number,
+                        photoUrl: emp.photo_url,
+                        hrDocuments: emp.hr_documents || [],
+                        documents: emp.documents || [],
+                        documentFolders: emp.document_folders || [],
+                        hrDocumentFolders: emp.hr_document_folders || [],
+                        timeOffRequests: emp.time_off_requests || [],
+                        nationalId: emp.national_id,
+                        dateOfBirth: emp.date_of_birth,
+                        taxId: emp.tax_id,
+                        phoneNumber: emp.phone_number,
+                        homeAddress: emp.home_address,
+                        nationality: emp.nationality,
+                        personalEmail: emp.personal_email,
+                        maritalStatus: emp.marital_status,
+                        emergencyContactName: emp.emergency_contact_name,
+                        emergencyContactPhone: emp.emergency_contact_phone,
+                        emergencyContactRelationship: emp.emergency_contact_relationship,
+                        bankAccountType: emp.bank_account_type,
+                        igssAffiliation: emp.igss_affiliation,
+                        gender: emp.gender,
+                        medicalConditions: emp.medical_conditions,
+                        profession: emp.profession,
+                        academicLevel: emp.academic_level,
+                        degreeTitle: emp.degree_title,
+                        bloodType: emp.blood_type,
+                        tShirtSize: emp.t_shirt_size,
+                        contractingCompany: emp.contracting_company
+                    })) as Employee[];
 
-        let found = employees.find(emp => emp.id === id);
+                    setAllEmployees(formattedAll);
 
-        // Fallback for cross-device testing where Local Storage doesn't naturally exist
-        if (!found && id) {
-            const searchParams = new URLSearchParams(window.location.search);
-            const fallbackData = searchParams.get('fallback');
-            if (fallbackData) {
-                try {
-                    const parsedData = JSON.parse(decodeURIComponent(atob(fallbackData)));
-                    found = {
-                        id,
-                        firstName: parsedData.firstName || 'New',
-                        lastName: parsedData.lastName || 'Employee',
-                        personalEmail: parsedData.personalEmail || '',
-                        email: parsedData.personalEmail || '',
-                        department: parsedData.department || 'Company',
-                        jobTitle: parsedData.jobTitle || 'Role',
-                        status: 'Onboarding',
-                        employmentStatus: 'Full Time',
-                        location: 'Headquarters',
-                        reportingTo: 'Manager',
-                        hireDate: new Date().toLocaleDateString()
-                    };
-                    employees.push(found); // push to array so saving functions work
-                } catch (e) {
-                    console.error("Fallback payload error", e);
+                    const found = formattedAll.find(emp => emp.id === id);
+                    if (found) {
+                        setEmployee(found);
+                        if (found.status === 'Onboarding') {
+                            setIsOnboardingSetup(true);
+                            setActiveTab('Setup Required');
+                            setSetupFormData(found);
+                        }
+                    }
                 }
+            } catch (err) {
+                console.error("Failed to load DB", err);
+            } finally {
+                setIsLoading(false);
             }
-        }
+        };
 
-        setAllEmployees(employees);
-
-        if (found) {
-            setEmployee(found);
-            if (found.status === 'Onboarding') {
-                setIsOnboardingSetup(true);
-                setActiveTab('Setup Required');
-                setSetupFormData(found);
-            }
-        }
-        setIsLoading(false);
+        fetchAll();
     }, [id]);
+
+    const updateEmployeeInDb = async (updatedEmp: Employee, isOtherEmployee = false) => {
+        const { error } = await supabase.from('employees').update({
+            first_name: updatedEmp.firstName,
+            last_name: updatedEmp.lastName,
+            email: updatedEmp.email,
+            personal_email: updatedEmp.personalEmail,
+            hire_date: updatedEmp.hireDate,
+            employment_status: updatedEmp.employmentStatus,
+            department: updatedEmp.department,
+            location: updatedEmp.location,
+            job_title: updatedEmp.jobTitle,
+            reporting_to: updatedEmp.reportingTo,
+            status: updatedEmp.status,
+            bank_name: updatedEmp.bankName,
+            bank_account_number: updatedEmp.bankAccountNumber,
+            bank_account_type: updatedEmp.bankAccountType,
+            photo_url: updatedEmp.photoUrl,
+            hr_documents: updatedEmp.hrDocuments,
+            documents: updatedEmp.documents,
+            document_folders: updatedEmp.documentFolders,
+            hr_document_folders: updatedEmp.hrDocumentFolders,
+            time_off_requests: updatedEmp.timeOffRequests,
+            national_id: updatedEmp.nationalId,
+            date_of_birth: updatedEmp.dateOfBirth,
+            tax_id: updatedEmp.taxId,
+            phone_number: updatedEmp.phoneNumber,
+            home_address: updatedEmp.homeAddress,
+            nationality: updatedEmp.nationality,
+            marital_status: updatedEmp.maritalStatus,
+            emergency_contact_name: updatedEmp.emergencyContactName,
+            emergency_contact_phone: updatedEmp.emergencyContactPhone,
+            emergency_contact_relationship: updatedEmp.emergencyContactRelationship,
+            igss_affiliation: updatedEmp.igssAffiliation,
+            gender: updatedEmp.gender,
+            medical_conditions: updatedEmp.medicalConditions,
+            profession: updatedEmp.profession,
+            academic_level: updatedEmp.academicLevel,
+            degree_title: updatedEmp.degreeTitle,
+            blood_type: updatedEmp.bloodType,
+            t_shirt_size: updatedEmp.tShirtSize,
+            contracting_company: updatedEmp.contractingCompany
+        }).eq('id', updatedEmp.id);
+
+        if (error) {
+            console.error("Failed to update employee in Supabase", error);
+        } else {
+            const updatedEmployees = allEmployees.map(emp => emp.id === updatedEmp.id ? updatedEmp : emp);
+            setAllEmployees(updatedEmployees);
+            if (!isOtherEmployee) {
+                setEmployee(updatedEmp);
+            }
+        }
+    };
 
     const handleSetupChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setSetupFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -96,11 +167,7 @@ const PublicEmployeeProfile = () => {
             status: 'Active'
         } as Employee;
 
-        const updatedEmployees = allEmployees.map(emp => emp.id === employee.id ? completeEmployee : emp);
-        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-
-        setEmployee(completeEmployee);
-        setAllEmployees(updatedEmployees);
+        updateEmployeeInDb(completeEmployee);
         setIsOnboardingSetup(false);
         setActiveTab('Personal');
     };
@@ -131,11 +198,7 @@ const PublicEmployeeProfile = () => {
             timeOffRequests: [...(employee.timeOffRequests || []), newRequest]
         };
 
-        const updatedEmployees = allEmployees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
-        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-
-        setEmployee(updatedEmployee);
-        setAllEmployees(updatedEmployees);
+        updateEmployeeInDb(updatedEmployee);
         setIsTimeOffModalOpen(false);
         setTimeOffStartDate('');
         setTimeOffEndDate('');
@@ -147,11 +210,7 @@ const PublicEmployeeProfile = () => {
         const updatedReqs = employee.timeOffRequests?.filter(r => r.id !== reqId) || [];
         const updatedEmployee = { ...employee, timeOffRequests: updatedReqs };
 
-        const updatedEmployees = allEmployees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
-        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-
-        setEmployee(updatedEmployee);
-        setAllEmployees(updatedEmployees);
+        updateEmployeeInDb(updatedEmployee);
         setDeletingTimeOffId(null);
     };
 
@@ -162,27 +221,26 @@ const PublicEmployeeProfile = () => {
         const updatedReqs = requestingEmp.timeOffRequests?.map(r => r.id === reqId ? { ...r, status } : r) || [];
         const updatedRequestingEmp = { ...requestingEmp, timeOffRequests: updatedReqs };
 
-        const updatedEmployees = allEmployees.map(emp => emp.id === empId ? updatedRequestingEmp : emp);
-        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-        setAllEmployees(updatedEmployees);
-        // If the current profile employee is the one whose request was approved, update the employee state too
-        if (employee?.id === empId) {
-            setEmployee(updatedRequestingEmp);
-        }
+        updateEmployeeInDb(updatedRequestingEmp, employee?.id !== empId);
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !employee) return;
 
         setIsUploading(true);
+        const docId = Math.random().toString(36).substring(2, 9);
+        const ext = file.name.split('.').pop();
+        const filePath = `${employee.id}/doc_${docId}.${ext}`;
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
+        const { data } = await supabase.storage.from('hr-documents').upload(filePath, file);
+
+        if (data) {
+            const { data: publicData } = supabase.storage.from('hr-documents').getPublicUrl(filePath);
             const newDoc: EmployeeDocument = {
-                id: Math.random().toString(36).substring(2, 9),
+                id: docId,
                 name: file.name,
-                dataUrl: reader.result as string,
+                dataUrl: publicData.publicUrl,
                 uploadedAt: new Date().toISOString(),
                 folderId: activeFolderId || undefined
             };
@@ -192,18 +250,9 @@ const PublicEmployeeProfile = () => {
                 documents: [...(employee.documents || []), newDoc]
             };
 
-            // Save to local storage DB
-            const saved = localStorage.getItem('vana_employees');
-            if (saved) {
-                const employees: Employee[] = JSON.parse(saved);
-                const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
-                localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-            }
-
-            setEmployee(updatedEmployee);
-            setIsUploading(false);
-        };
-        reader.readAsDataURL(file);
+            updateEmployeeInDb(updatedEmployee);
+        }
+        setIsUploading(false);
     };
 
     const handleCreateFolder = () => {
@@ -218,15 +267,7 @@ const PublicEmployeeProfile = () => {
         const updatedFolders = [...(employee.documentFolders || []), newFolder];
         const updatedEmployee = { ...employee, documentFolders: updatedFolders };
 
-        // Save to local storage DB
-        const saved = localStorage.getItem('vana_employees');
-        if (saved) {
-            const employees: Employee[] = JSON.parse(saved);
-            const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
-            localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-        }
-
-        setEmployee(updatedEmployee);
+        updateEmployeeInDb(updatedEmployee);
         setNewFolderName('');
         setIsCreatingFolder(false);
     };
@@ -237,15 +278,7 @@ const PublicEmployeeProfile = () => {
         const updatedDocs = employee.documents?.filter(d => d.id !== docId) || [];
         const updatedEmployee = { ...employee, documents: updatedDocs };
 
-        // Save to local storage DB
-        const saved = localStorage.getItem('vana_employees');
-        if (saved) {
-            const employees: Employee[] = JSON.parse(saved);
-            const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
-            localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-        }
-
-        setEmployee(updatedEmployee);
+        updateEmployeeInDb(updatedEmployee);
         setDeletingDocId(null);
     };
 
@@ -261,15 +294,7 @@ const PublicEmployeeProfile = () => {
             documents: updatedDocs
         };
 
-        // Save to local storage DB
-        const saved = localStorage.getItem('vana_employees');
-        if (saved) {
-            const employees: Employee[] = JSON.parse(saved);
-            const updatedEmployees = employees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp);
-            localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
-        }
-
-        setEmployee(updatedEmployee);
+        updateEmployeeInDb(updatedEmployee);
         setDeletingFolderId(null);
         if (activeFolderId === folderId) setActiveFolderId(null);
     };

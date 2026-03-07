@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trash2, FileText, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import type { Employee } from '../../types/Employee';
 
 interface Props {
@@ -51,6 +52,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
     const [activeTab, setActiveTab] = useState<'quick' | 'full'>('quick');
     const [generatedId, setGeneratedId] = useState('');
     const [copiedShareLink, setCopiedShareLink] = useState(false);
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [hrFiles, setHrFiles] = useState<{ id: string, file: File }[]>([]);
 
     useEffect(() => {
         if (isOpen && !generatedId) {
@@ -71,10 +74,87 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
 
         const finalId = generatedId || Math.random().toString(36).substring(2, 9);
 
-        // Auto generate ID and pass back to parent
+        let finalPhotoUrl = formData.photoUrl;
+
+        if (photoFile) {
+            const ext = photoFile.name.split('.').pop();
+            const filePath = `${finalId}/avatar_${Date.now()}.${ext}`;
+            const { data } = await supabase.storage.from('avatars').upload(filePath, photoFile);
+            if (data) {
+                const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                finalPhotoUrl = publicData.publicUrl;
+            }
+        }
+
+        const finalHrDocs = [];
+        for (const doc of (formData.hrDocuments || [])) {
+            const fileObj = hrFiles.find(f => f.id === doc.id);
+            if (fileObj) {
+                const ext = fileObj.file.name.split('.').pop();
+                const filePath = `${finalId}/hr_${doc.id}.${ext}`;
+                const { data } = await supabase.storage.from('hr-documents').upload(filePath, fileObj.file);
+                if (data) {
+                    const { data: publicData } = supabase.storage.from('hr-documents').getPublicUrl(filePath);
+                    finalHrDocs.push({ ...doc, dataUrl: publicData.publicUrl });
+                } else {
+                    finalHrDocs.push(doc); // Fallback to base64 if upload fails
+                }
+            } else {
+                finalHrDocs.push(doc);
+            }
+        }
+
+        const { error: dbError } = await supabase.from('employees').insert([{
+            id: finalId,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            personal_email: formData.personalEmail,
+            hire_date: formData.hireDate,
+            employment_status: formData.employmentStatus,
+            department: formData.department,
+            location: formData.location,
+            job_title: formData.jobTitle,
+            reporting_to: formData.reportingTo,
+            status: activeTab === 'quick' ? 'Onboarding' : formData.status || 'Active',
+            bank_name: formData.bankName,
+            bank_account_number: formData.bankAccountNumber,
+            bank_account_type: formData.bankAccountType,
+            photo_url: finalPhotoUrl,
+            hr_documents: finalHrDocs,
+            national_id: formData.nationalId,
+            date_of_birth: formData.dateOfBirth,
+            tax_id: formData.taxId,
+            phone_number: formData.phoneNumber,
+            home_address: formData.homeAddress,
+            nationality: formData.nationality,
+            marital_status: formData.maritalStatus,
+            emergency_contact_name: formData.emergencyContactName,
+            emergency_contact_phone: formData.emergencyContactPhone,
+            emergency_contact_relationship: formData.emergencyContactRelationship,
+            igss_affiliation: formData.igssAffiliation,
+            gender: formData.gender,
+            medical_conditions: formData.medicalConditions,
+            profession: formData.profession,
+            academic_level: formData.academicLevel,
+            degree_title: formData.degreeTitle,
+            blood_type: formData.bloodType,
+            t_shirt_size: formData.tShirtSize,
+            contracting_company: formData.contractingCompany
+        }]);
+
+        if (dbError) {
+            console.error("Error inserting employee into Supabase", dbError);
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Pass back to parent
         const newEmployee: Employee = {
             ...(formData as Employee),
             id: finalId,
+            photoUrl: finalPhotoUrl || '',
+            hrDocuments: finalHrDocs,
             status: activeTab === 'quick' ? 'Onboarding' : formData.status || 'Active'
         };
 
@@ -133,6 +213,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setPhotoFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
@@ -145,10 +226,13 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const id = Math.random().toString(36).substring(2, 9);
+        setHrFiles(prev => [...prev, { id, file }]);
+
         const reader = new FileReader();
         reader.onloadend = () => {
             const newDoc = {
-                id: Math.random().toString(36).substring(2, 9),
+                id,
                 name: file.name,
                 dataUrl: reader.result as string,
                 uploadedAt: new Date().toISOString()
@@ -162,6 +246,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
     };
 
     const handleDeleteHrDocument = (docId: string) => {
+        setHrFiles(prev => prev.filter(f => f.id !== docId));
         setFormData(prev => ({
             ...prev,
             hrDocuments: prev.hrDocuments?.filter(d => d.id !== docId) || []

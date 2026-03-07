@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trash2, Edit2, Save, XCircle, Link as LinkIcon, Check, Download, FileText, Folder, FolderPlus, ChevronLeft, Clock, Sparkles } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import type { Employee } from '../../types/Employee';
 
 interface Props {
@@ -65,27 +66,34 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFormData(prev => prev ? ({ ...prev, photoUrl: reader.result as string }) : null);
-            };
-            reader.readAsDataURL(file);
+        if (file && formData) {
+            const ext = file.name.split('.').pop();
+            const filePath = `${formData.id}/avatar_${Date.now()}.${ext}`;
+            const { data } = await supabase.storage.from('avatars').upload(filePath, file);
+            if (data) {
+                const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                setFormData(prev => prev ? ({ ...prev, photoUrl: publicData.publicUrl }) : null);
+            }
         }
     };
 
-    const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !formData) return;
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
+        const docId = Math.random().toString(36).substring(2, 9);
+        const ext = file.name.split('.').pop();
+        const filePath = `${formData.id}/doc_${docId}.${ext}`;
+
+        const { data } = await supabase.storage.from('hr-documents').upload(filePath, file);
+        if (data) {
+            const { data: publicData } = supabase.storage.from('hr-documents').getPublicUrl(filePath);
             const newDoc = {
-                id: Math.random().toString(36).substring(2, 9),
+                id: docId,
                 name: file.name,
-                dataUrl: reader.result as string,
+                dataUrl: publicData.publicUrl,
                 uploadedAt: new Date().toISOString(),
                 folderId: activeFolderId || undefined
             };
@@ -94,8 +102,7 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
             const updatedEmployee = { ...formData, documents: updatedDocs };
             setFormData(updatedEmployee);
             onUpdate(updatedEmployee);
-        };
-        reader.readAsDataURL(file);
+        }
     };
 
     const handleCreateFolder = () => {
@@ -132,16 +139,21 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
         setIsCreatingHrFolder(false);
     };
 
-    const handleHrDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleHrDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !formData) return;
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
+        const docId = Math.random().toString(36).substring(2, 9);
+        const ext = file.name.split('.').pop();
+        const filePath = `${formData.id}/hr_${docId}.${ext}`;
+
+        const { data } = await supabase.storage.from('hr-documents').upload(filePath, file);
+        if (data) {
+            const { data: publicData } = supabase.storage.from('hr-documents').getPublicUrl(filePath);
             const newDoc = {
-                id: Math.random().toString(36).substring(2, 9),
+                id: docId,
                 name: file.name,
-                dataUrl: reader.result as string,
+                dataUrl: publicData.publicUrl,
                 uploadedAt: new Date().toISOString(),
                 folderId: activeHrFolderId || undefined
             };
@@ -150,8 +162,7 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
             const updatedEmployee = { ...formData, hrDocuments: updatedHrDocs };
             setFormData(updatedEmployee);
             onUpdate(updatedEmployee);
-        };
-        reader.readAsDataURL(file);
+        }
     };
 
     const handleSave = () => {

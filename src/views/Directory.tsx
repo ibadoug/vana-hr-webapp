@@ -53,23 +53,74 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     }
 ];
 
-const Directory = () => {
-    const [employees, setEmployees] = useState<Employee[]>(() => {
-        const saved = localStorage.getItem('vana_employees');
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                console.error('Failed to parse employees from local storage', e);
-            }
-        }
-        return INITIAL_EMPLOYEES;
-    });
+import { supabase } from '../lib/supabase';
 
-    // Persist to local storage whenever employees array changes
+const Directory = () => {
+    const [employees, setEmployees] = useState<Employee[]>([]);
+
+    const fetchEmployees = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('employees')
+                .select('*')
+                .order('first_name', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching employees:', error);
+                return;
+            }
+
+            // Map snake_case from DB back to camelCase for the frontend type
+            if (data) {
+                const formatted = data.map(emp => ({
+                    id: emp.id,
+                    firstName: emp.first_name,
+                    lastName: emp.last_name,
+                    email: emp.email,
+                    hireDate: emp.hire_date,
+                    employmentStatus: emp.employment_status,
+                    department: emp.department,
+                    location: emp.location,
+                    jobTitle: emp.job_title,
+                    reportingTo: emp.reporting_to,
+                    status: emp.status,
+                    bankName: emp.bank_name,
+                    bankAccountNumber: emp.bank_account_number,
+                    photoUrl: emp.photo_url,
+                    hrDocuments: emp.hr_documents || [],
+                    nationalId: emp.national_id,
+                    dateOfBirth: emp.date_of_birth,
+                    taxId: emp.tax_id,
+                    phoneNumber: emp.phone_number,
+                    homeAddress: emp.home_address,
+                    nationality: emp.nationality,
+                    personalEmail: emp.personal_email,
+                    maritalStatus: emp.marital_status,
+                    emergencyContactName: emp.emergency_contact_name,
+                    emergencyContactPhone: emp.emergency_contact_phone,
+                    emergencyContactRelationship: emp.emergency_contact_relationship,
+                    bankAccountType: emp.bank_account_type,
+                    igssAffiliation: emp.igss_affiliation,
+                    gender: emp.gender,
+                    medicalConditions: emp.medical_conditions,
+                    profession: emp.profession,
+                    academicLevel: emp.academic_level,
+                    degreeTitle: emp.degree_title,
+                    bloodType: emp.blood_type,
+                    tShirtSize: emp.t_shirt_size,
+                    contractingCompany: emp.contracting_company
+                })) as Employee[];
+                setEmployees(formatted);
+            }
+        } catch (err) {
+            console.error('Unexpected error loading directory:', err);
+        }
+    };
+
     useEffect(() => {
-        localStorage.setItem('vana_employees', JSON.stringify(employees));
-    }, [employees]);
+        // eslint-disable-next-line
+        fetchEmployees();
+    }, []);
     const [searchQuery, setSearchQuery] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -120,18 +171,78 @@ const Directory = () => {
         });
     }, [employees, searchQuery, filterCategory, statusFilter]);
 
-    const handleAddEmployee = (newEmp: Employee) => {
-        setEmployees([...employees, newEmp]);
+    const handleAddEmployee = () => {
+        // Add action is handled by the modal DB insert already
+        fetchEmployees();
     };
 
-    const handleUpdateEmployee = (updatedEmp: Employee) => {
+    const handleUpdateEmployee = async (updatedEmp: Employee) => {
+        // Optimistic UI Update
         setEmployees(employees.map(emp => emp.id === updatedEmp.id ? updatedEmp : emp));
-        setSelectedEmployee(updatedEmp); // Update selected employee to show new data
+        setSelectedEmployee(updatedEmp);
+
+        // Map to DB and persist
+        const { error } = await supabase.from('employees').update({
+            first_name: updatedEmp.firstName,
+            last_name: updatedEmp.lastName,
+            email: updatedEmp.email,
+            personal_email: updatedEmp.personalEmail,
+            hire_date: updatedEmp.hireDate,
+            employment_status: updatedEmp.employmentStatus,
+            department: updatedEmp.department,
+            location: updatedEmp.location,
+            job_title: updatedEmp.jobTitle,
+            reporting_to: updatedEmp.reportingTo,
+            status: updatedEmp.status,
+            bank_name: updatedEmp.bankName,
+            bank_account_number: updatedEmp.bankAccountNumber,
+            bank_account_type: updatedEmp.bankAccountType,
+            photo_url: updatedEmp.photoUrl,
+            hr_documents: updatedEmp.hrDocuments,
+            documents: updatedEmp.documents,
+            document_folders: updatedEmp.documentFolders,
+            hr_document_folders: updatedEmp.hrDocumentFolders,
+            time_off_requests: updatedEmp.timeOffRequests,
+            national_id: updatedEmp.nationalId,
+            date_of_birth: updatedEmp.dateOfBirth,
+            tax_id: updatedEmp.taxId,
+            phone_number: updatedEmp.phoneNumber,
+            home_address: updatedEmp.homeAddress,
+            nationality: updatedEmp.nationality,
+            marital_status: updatedEmp.maritalStatus,
+            emergency_contact_name: updatedEmp.emergencyContactName,
+            emergency_contact_phone: updatedEmp.emergencyContactPhone,
+            emergency_contact_relationship: updatedEmp.emergencyContactRelationship,
+            igss_affiliation: updatedEmp.igssAffiliation,
+            gender: updatedEmp.gender,
+            medical_conditions: updatedEmp.medicalConditions,
+            profession: updatedEmp.profession,
+            academic_level: updatedEmp.academicLevel,
+            degree_title: updatedEmp.degreeTitle,
+            blood_type: updatedEmp.bloodType,
+            t_shirt_size: updatedEmp.tShirtSize,
+            contracting_company: updatedEmp.contractingCompany
+        }).eq('id', updatedEmp.id);
+
+        if (error) {
+            console.error("Failed to update employee", error);
+        }
+
+        fetchEmployees(); // Resync state
     };
 
-    const handleDeleteEmployee = (id: string) => {
-        setEmployees(employees.filter(emp => emp.id !== id));
-        setSelectedEmployee(null); // Close modal
+    const handleDeleteEmployee = async (id: string) => {
+        try {
+            const { error } = await supabase.from('employees').delete().eq('id', id);
+            if (!error) {
+                setEmployees(employees.filter(emp => emp.id !== id));
+                setSelectedEmployee(null); // Close modal
+            } else {
+                console.error("Delete failed:", error);
+            }
+        } catch (err) {
+            console.error("Delete exception:", err);
+        }
     };
 
     return (
