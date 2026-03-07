@@ -171,48 +171,51 @@ const AddHolidays: React.FC<Props> = ({ onClose }) => {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // Mock saving logic
-            console.log("Saving holidays for the following assignments:", employeeSelections);
-            console.log("Holidays data:", holidaysData);
+            const rowsToInsert: any[] = [];
 
-            // In a real scenario:
-            // 1. Iterate over selectedCountries
-            // 2. Based on employeeSelections[cName].mode, determine the final list of employee IDs.
-            // 3. For each employee ID, insert the holidays for that country into `employee_holidays`.
-
-            const payload = Array.from(selectedCountries).map(cName => {
+            // Determine which employee IDs get which holidays
+            Array.from(selectedCountries).forEach(cName => {
+                const holidays = holidaysData[cName] || [];
                 const stats = countryStats.find(s => s.name === cName);
-                const selection = employeeSelections[cName];
-                const holidays = holidaysData[cName];
+                const rules = employeeSelections[cName];
 
-                let targetEmployeeIds: string[] = [];
-                if (selection.mode === 'All') {
-                    targetEmployeeIds = stats?.employees.map(e => e.id) || [];
-                } else if (selection.mode === 'Include') {
-                    targetEmployeeIds = selection.selectedIds;
-                } else if (selection.mode === 'Exclude') {
-                    targetEmployeeIds = stats?.employees
-                        .map(e => e.id)
-                        .filter(id => !selection.selectedIds.includes(id)) || [];
+                // Resolve targeted employee IDs
+                let targetIds: string[] = [];
+                if (rules.mode === 'All') {
+                    targetIds = stats?.employees.map(e => e.id) || [];
+                } else if (rules.mode === 'Include') {
+                    targetIds = rules.selectedIds;
+                } else if (rules.mode === 'Exclude') {
+                    targetIds = stats?.employees.map(e => e.id).filter(id => !rules.selectedIds.includes(id)) || [];
                 }
 
-                return {
-                    country: cName,
-                    targetEmployeeCount: targetEmployeeIds.length,
-                    holidaysCount: holidays?.length || 0,
-                    employeeIds: targetEmployeeIds
-                };
+                // Map each holiday to every assigned employee
+                targetIds.forEach(empId => {
+                    holidays.forEach(h => {
+                        rowsToInsert.push({
+                            employee_id: empId,
+                            name: h.name,
+                            date: h.date,
+                            country_code: h.countryCode || getCountryCode(cName),
+                            type: 'Standard'
+                        });
+                    });
+                });
             });
 
-            console.log("Simulation Payload:", payload);
+            // Bulk Insert into Supabase
+            const { error } = await supabase.from('employee_holidays').insert(rowsToInsert);
+            if (error) {
+                console.error("Failed to insert holidays", error);
+                alert("Failed to save holidays. Check the console for more details.");
+                return;
+            }
 
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // Close after saving
+            // Close after saving successfully
             onClose();
         } catch (error) {
             console.error("Error saving holidays", error);
+            alert("An unexpected error occurred while saving.");
         } finally {
             setIsSaving(false);
         }
