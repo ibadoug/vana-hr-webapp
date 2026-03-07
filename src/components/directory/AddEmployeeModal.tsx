@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Trash2, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Trash2, FileText, Link as LinkIcon, Copy, Check } from 'lucide-react';
 import type { Employee } from '../../types/Employee';
 
 interface Props {
@@ -49,7 +49,17 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
     });
     const [sendOnboardingEmail, setSendOnboardingEmail] = useState(false);
     const [activeTab, setActiveTab] = useState<'quick' | 'full'>('quick');
-    const [copyShareLink, setCopyShareLink] = useState(false);
+    const [generatedId, setGeneratedId] = useState('');
+    const [copiedShareLink, setCopiedShareLink] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && !generatedId) {
+            setGeneratedId(Math.random().toString(36).substring(2, 9));
+        } else if (!isOpen) {
+            setGeneratedId('');
+            setCopiedShareLink(false);
+        }
+    }, [isOpen, generatedId]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -62,7 +72,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         // Auto generate ID and pass back to parent
         const newEmployee: Employee = {
             ...(formData as Employee),
-            id: Math.random().toString(36).substring(2, 9)
+            id: generatedId || Math.random().toString(36).substring(2, 9)
         };
 
         const targetEmail = activeTab === 'quick' ? formData.personalEmail : formData.email;
@@ -85,11 +95,6 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             }
         }
 
-        if (activeTab === 'quick' && copyShareLink) {
-            const shareUrl = `${window.location.origin}/p/${newEmployee.id}`;
-            navigator.clipboard.writeText(shareUrl).catch(() => { });
-        }
-
         onAdd(newEmployee);
         onClose();
 
@@ -101,7 +106,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             nationalId: '', dateOfBirth: '', taxId: '', phoneNumber: '', homeAddress: '', nationality: '', personalEmail: '', maritalStatus: '', emergencyContactName: '', emergencyContactPhone: '', emergencyContactRelationship: '', bankAccountType: '', igssAffiliation: '', gender: '', medicalConditions: '', profession: '', academicLevel: '', degreeTitle: '', bloodType: '', tShirtSize: '', contractingCompany: ''
         });
         setSendOnboardingEmail(false);
-        setCopyShareLink(false);
+        setGeneratedId('');
+        setCopiedShareLink(false);
         setActiveTab('quick');
         setIsSubmitting(false);
     };
@@ -163,8 +169,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                         type="button"
                         onClick={() => setActiveTab('quick')}
                         className={`px-5 py-2.5 font-medium text-sm transition-colors focus:outline-none ${activeTab === 'quick'
-                                ? 'bg-white text-[#4F7BFE] border-t border-x border-gray-200 rounded-t-lg shadow-sm font-semibold'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-t-lg'
+                            ? 'bg-white text-[#4F7BFE] border-t border-x border-gray-200 rounded-t-lg shadow-sm font-semibold'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-t-lg'
                             }`}
                     >
                         Quick Invite
@@ -173,8 +179,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                         type="button"
                         onClick={() => setActiveTab('full')}
                         className={`px-5 py-2.5 font-medium text-sm transition-colors focus:outline-none ${activeTab === 'full'
-                                ? 'bg-white text-[#4F7BFE] border-t border-x border-gray-200 rounded-t-lg shadow-sm font-semibold'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-t-lg'
+                            ? 'bg-white text-[#4F7BFE] border-t border-x border-gray-200 rounded-t-lg shadow-sm font-semibold'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-t-lg'
                             }`}
                     >
                         Full Record
@@ -495,7 +501,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                     <div className="flex justify-between items-center p-6 pt-4 border-t border-gray-100 shrink-0 bg-white w-full">
                         <div>
                             {activeTab === 'quick' && (
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-4 w-full">
                                     <label className="flex items-center space-x-2 cursor-pointer">
                                         <input
                                             type="checkbox"
@@ -503,17 +509,38 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                                             onChange={(e) => setSendOnboardingEmail(e.target.checked)}
                                             className="w-4 h-4 text-[#4F7BFE] bg-gray-100 border-gray-300 rounded focus:ring-[#4F7BFE] focus:ring-2 cursor-pointer"
                                         />
-                                        <span className="text-sm font-medium text-gray-700 select-none">Send Onboarding Email</span>
+                                        <span className="text-sm font-medium text-gray-700 select-none">Send Email</span>
                                     </label>
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={copyShareLink}
-                                            onChange={(e) => setCopyShareLink(e.target.checked)}
-                                            className="w-4 h-4 text-[#4F7BFE] bg-gray-100 border-gray-300 rounded focus:ring-[#4F7BFE] focus:ring-2 cursor-pointer"
-                                        />
-                                        <span className="text-sm font-medium text-gray-700 select-none">Copy Shareable Link on Save</span>
-                                    </label>
+
+                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 w-full max-w-lg">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                                <LinkIcon size={16} className="text-gray-500" />
+                                                Get link
+                                            </div>
+                                            <span className="text-xs text-gray-500 hidden sm:inline">Anyone with this link can view the public profile</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500 truncate select-all">
+                                                {typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : ''}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!generatedId) return;
+                                                    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : '';
+                                                    navigator.clipboard.writeText(shareUrl).then(() => {
+                                                        setCopiedShareLink(true);
+                                                        setTimeout(() => setCopiedShareLink(false), 2000);
+                                                    }).catch(() => { });
+                                                }}
+                                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#4F7BFE] bg-[#EEF2FF] border border-transparent rounded-md hover:bg-[#DCE4FF] focus:outline-none transition-colors whitespace-nowrap"
+                                            >
+                                                {copiedShareLink ? <Check size={16} /> : <Copy size={16} />}
+                                                {copiedShareLink ? 'Copied' : 'Copy link'}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -522,7 +549,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                                 Cancel
                             </button>
                             <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm font-medium text-white bg-[#4F7BFE] border border-transparent rounded-md hover:bg-[#3B5BDB] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4F7BFE] disabled:opacity-50 flex items-center justify-center">
-                                {isSubmitting ? 'Saving...' : 'Save Employee'}
+                                {isSubmitting ? (activeTab === 'quick' ? 'Sending...' : 'Saving...') : (activeTab === 'quick' ? 'Send' : 'Save Employee')}
                             </button>
                         </div>
                     </div>
