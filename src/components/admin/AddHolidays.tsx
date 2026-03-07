@@ -74,7 +74,7 @@ const AddHolidays: React.FC<Props> = ({ onClose }) => {
         try {
             const { data, error } = await supabase
                 .from('employees')
-                .select('id, first_name, last_name, country')
+                .select('id, first_name, last_name, location')
                 .eq('status', 'Active');
 
             if (error) throw error;
@@ -83,7 +83,10 @@ const AddHolidays: React.FC<Props> = ({ onClose }) => {
                 const statsMap = new Map<string, CountryStats>();
 
                 data.forEach(emp => {
-                    const cName = emp.country || 'Unknown';
+                    const parts = (emp.location || '').split(',').map((s: string) => s.trim());
+                    // If location resembles "City, Country", parts[1] is Country. Otherwise fallback to the whole location string if not empty, or 'Unknown'
+                    const cName = parts.length > 1 ? parts[1] : (parts[0] || 'Unknown');
+
                     // We only want known countries for the API
                     if (cName !== 'Unknown') {
                         if (!statsMap.has(cName)) {
