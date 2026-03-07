@@ -69,10 +69,13 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         e.preventDefault();
         setIsSubmitting(true);
 
+        const generatedShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId || Math.random().toString(36).substring(2, 9)}` : '';
+
         // Auto generate ID and pass back to parent
         const newEmployee: Employee = {
             ...(formData as Employee),
-            id: generatedId || Math.random().toString(36).substring(2, 9)
+            id: generatedId || Math.random().toString(36).substring(2, 9),
+            status: activeTab === 'quick' ? 'Onboarding' : formData.status || 'Active'
         };
 
         const targetEmail = activeTab === 'quick' ? formData.personalEmail : formData.email;
@@ -83,7 +86,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         email: targetEmail,
-                        firstName: formData.firstName
+                        firstName: formData.firstName,
+                        shareUrl: generatedShareUrl
                     })
                 });
 

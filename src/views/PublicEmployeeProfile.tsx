@@ -23,7 +23,11 @@ const PublicEmployeeProfile = () => {
     const [timeOffEndDate, setTimeOffEndDate] = useState('');
     const [deletingTimeOffId, setDeletingTimeOffId] = useState<string | null>(null);
 
-    const tabs = ['Personal', 'Job', 'Time Off', 'Timesheet', 'Documents', 'Benefits', 'Approval'];
+    // Profile completion state
+    const [isOnboardingSetup, setIsOnboardingSetup] = useState(false);
+    const [setupFormData, setSetupFormData] = useState<Partial<Employee>>({});
+
+    const tabs = isOnboardingSetup ? ['Setup Required', 'Documents'] : ['Personal', 'Job', 'Time Off', 'Timesheet', 'Documents', 'Benefits', 'Approval'];
 
     useEffect(() => {
         // Simulate an API fetch using the local storage mock DB
@@ -35,6 +39,11 @@ const PublicEmployeeProfile = () => {
                 const found = employees.find(emp => emp.id === id);
                 if (found) {
                     setEmployee(found);
+                    if (found.status === 'Onboarding') {
+                        setIsOnboardingSetup(true);
+                        setActiveTab('Setup Required');
+                        setSetupFormData(found);
+                    }
                 }
             } catch (e) {
                 console.error("Failed to parse directory", e);
@@ -42,6 +51,27 @@ const PublicEmployeeProfile = () => {
         }
         setIsLoading(false);
     }, [id]);
+
+    const handleSetupChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setSetupFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleCompleteSetup = () => {
+        if (!employee) return;
+        const completeEmployee: Employee = {
+            ...employee,
+            ...setupFormData,
+            status: 'Active'
+        } as Employee;
+
+        const updatedEmployees = allEmployees.map(emp => emp.id === employee.id ? completeEmployee : emp);
+        localStorage.setItem('vana_employees', JSON.stringify(updatedEmployees));
+
+        setEmployee(completeEmployee);
+        setAllEmployees(updatedEmployees);
+        setIsOnboardingSetup(false);
+        setActiveTab('Personal');
+    };
 
     const pendingApprovals = employee ? allEmployees.reduce((acc, emp) => {
         if (emp.reportingTo === `${employee.firstName} ${employee.lastName}`) {
@@ -421,6 +451,87 @@ const PublicEmployeeProfile = () => {
                                 <div>
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contracting Company</p>
                                     <p className="text-gray-900 font-medium">{employee.contractingCompany || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'Setup Required' && isOnboardingSetup && (
+                            <div className="p-6 sm:p-8">
+                                <div className="mb-6 pb-6 border-b border-gray-100">
+                                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                        <Sparkles className="text-[#4F7BFE]" size={20} />
+                                        Complete Your Profile
+                                    </h2>
+                                    <p className="text-gray-500 mt-1">Please fill out your remaining details to finish the setup process and activate your account.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Pre-filled read-only fields */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                        <input disabled value={employee.firstName} className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                        <input disabled value={employee.lastName} className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-500" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Personal Email</label>
+                                        <input disabled value={employee.personalEmail || ''} className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-500" />
+                                    </div>
+
+                                    {/* Editable fields */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                                        <input type="date" name="dateOfBirth" value={setupFormData.dateOfBirth || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">National ID (DPI/DNI)</label>
+                                        <input name="nationalId" value={setupFormData.nationalId || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID (NIT)</label>
+                                        <input name="taxId" value={setupFormData.taxId || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                        <input name="phoneNumber" value={setupFormData.phoneNumber || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Home Address</label>
+                                        <input name="homeAddress" value={setupFormData.homeAddress || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                                        <input name="nationality" value={setupFormData.nationality || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
+                                        <select name="maritalStatus" value={setupFormData.maritalStatus || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select...</option>
+                                            <option value="Soltero">Soltero/a</option>
+                                            <option value="Casado">Casado/a</option>
+                                            <option value="Unido">Unido/a</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Name</label>
+                                        <input name="emergencyContactName" value={setupFormData.emergencyContactName || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
+                                        <input name="emergencyContactPhone" value={setupFormData.emergencyContactPhone || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                                    <button
+                                        onClick={handleCompleteSetup}
+                                        className="bg-[#4F7BFE] hover:bg-[#3B5BDB] text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
+                                    >
+                                        <CheckCircle size={18} />
+                                        Complete & Activate Profile
+                                    </button>
                                 </div>
                             </div>
                         )}

@@ -3,10 +3,10 @@ export default async function handler(req: any, res: any) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { email, firstName } = req.body;
+    const { email, firstName, shareUrl } = req.body;
 
-    if (!email || !firstName) {
-        return res.status(400).json({ error: 'Missing email or firstName' });
+    if (!email || !firstName || !shareUrl) {
+        return res.status(400).json({ error: 'Missing email, firstName, or shareUrl' });
     }
 
     try {
@@ -26,15 +26,14 @@ export default async function handler(req: any, res: any) {
             body: JSON.stringify({
                 from: 'Vana HR <c@compamobile.com>',
                 to: [email],
-                subject: 'Welcome to the team!',
+                subject: 'Estamos cerca para que comience!',
                 html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2 style="color: #4F7BFE;">Welcome aboard, ${firstName}! 🎉</h2>
-            <p>We are thrilled to have you join the Vana HR team.</p>
-            <p>Your onboarding process will begin shortly. If you have any immediate questions, please don't hesitate to reach out to your manager or the HR department.</p>
-            <br/>
-            <p>Best regards,</p>
-            <p><strong>The HR Team</strong></p>
+            <p>Estamos bastante cerca para que comiences en Vana. Estamos muy emocionados. Para poder continuar, necesitamos que hagas lo siguiente:</p>
+            <ul>
+              <li><a href="${shareUrl}">Completar Perfil</a></li>
+              <li>Subir los archivos en ese perfil</li>
+            </ul>
           </div>
         `,
             })

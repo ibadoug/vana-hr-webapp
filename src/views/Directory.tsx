@@ -87,10 +87,12 @@ const Directory = () => {
 
     // Multi-criteria filter
     const filteredEmployees = useMemo(() => {
-        const baseEmployees = statusFilter === 'All' ? employees : employees.filter(emp => {
-            const currentStatus = emp.status || 'Active';
-            return currentStatus === statusFilter;
-        });
+        const baseEmployees = employees.filter(emp => emp.status !== 'Onboarding')
+            .filter(emp => {
+                if (statusFilter === 'All') return true;
+                const currentStatus = emp.status || 'Active';
+                return currentStatus === statusFilter;
+            });
 
         if (!searchQuery) return baseEmployees;
         const q = searchQuery.toLowerCase();
@@ -329,6 +331,7 @@ const Directory = () => {
                     <OrgChart
                         employees={employees.filter(emp =>
                             emp.status !== 'Inactive' &&
+                            emp.status !== 'Onboarding' &&
                             (orgChartDepartment === 'All' || emp.department === orgChartDepartment)
                         )}
                         onNodeClick={(emp) => setSelectedEmployee(emp)}
