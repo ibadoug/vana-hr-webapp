@@ -79,10 +79,19 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         if (photoFile) {
             const ext = photoFile.name.split('.').pop();
             const filePath = `${finalId}/avatar_${Date.now()}.${ext}`;
-            const { data } = await supabase.storage.from('avatars').upload(filePath, photoFile);
-            if (data) {
+            const { data, error } = await supabase.storage.from('avatars').upload(filePath, photoFile);
+            if (data && !error) {
                 const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(filePath);
                 finalPhotoUrl = publicData.publicUrl;
+            } else {
+                console.error("Avatar storage upload failed, falling back to base64", error);
+                // Convert photoFile to base64 synchronously or ideally handle it upstream.
+                // Since this is inside form submission, we can try to await a base64 conversion.
+                finalPhotoUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(photoFile);
+                });
             }
         }
 
@@ -92,12 +101,18 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             if (fileObj) {
                 const ext = fileObj.file.name.split('.').pop();
                 const filePath = `${finalId}/hr_${doc.id}.${ext}`;
-                const { data } = await supabase.storage.from('hr-documents').upload(filePath, fileObj.file);
-                if (data) {
+                const { data, error } = await supabase.storage.from('hr-documents').upload(filePath, fileObj.file);
+                if (data && !error) {
                     const { data: publicData } = supabase.storage.from('hr-documents').getPublicUrl(filePath);
                     finalHrDocs.push({ ...doc, dataUrl: publicData.publicUrl });
                 } else {
-                    finalHrDocs.push(doc); // Fallback to base64 if upload fails
+                    console.error("HR Document storage upload failed, falling back to base64", error);
+                    const base64Url: string = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.readAsDataURL(fileObj.file);
+                    });
+                    finalHrDocs.push({ ...doc, dataUrl: base64Url });
                 }
             } else {
                 finalHrDocs.push(doc);

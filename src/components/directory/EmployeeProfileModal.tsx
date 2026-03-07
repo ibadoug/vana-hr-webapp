@@ -71,10 +71,17 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
         if (file && formData) {
             const ext = file.name.split('.').pop();
             const filePath = `${formData.id}/avatar_${Date.now()}.${ext}`;
-            const { data } = await supabase.storage.from('avatars').upload(filePath, file);
-            if (data) {
+            const { data, error } = await supabase.storage.from('avatars').upload(filePath, file);
+            if (data && !error) {
                 const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(filePath);
                 setFormData(prev => prev ? ({ ...prev, photoUrl: publicData.publicUrl }) : null);
+            } else {
+                console.error("Storage upload failed, falling back to base64", error);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setFormData(prev => prev ? ({ ...prev, photoUrl: reader.result as string }) : null);
+                };
+                reader.readAsDataURL(file);
             }
         }
     };
@@ -87,8 +94,8 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
         const ext = file.name.split('.').pop();
         const filePath = `${formData.id}/doc_${docId}.${ext}`;
 
-        const { data } = await supabase.storage.from('hr-documents').upload(filePath, file);
-        if (data) {
+        const { data, error } = await supabase.storage.from('hr-documents').upload(filePath, file);
+        if (data && !error) {
             const { data: publicData } = supabase.storage.from('hr-documents').getPublicUrl(filePath);
             const newDoc = {
                 id: docId,
@@ -102,6 +109,23 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
             const updatedEmployee = { ...formData, documents: updatedDocs };
             setFormData(updatedEmployee);
             onUpdate(updatedEmployee);
+        } else {
+            console.error("Storage upload failed, falling back to base64", error);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const newDoc = {
+                    id: docId,
+                    name: file.name,
+                    dataUrl: reader.result as string,
+                    uploadedAt: new Date().toISOString(),
+                    folderId: activeFolderId || undefined
+                };
+                const updatedDocs = [...(formData.documents || []), newDoc];
+                const updatedEmployee = { ...formData, documents: updatedDocs };
+                setFormData(updatedEmployee);
+                onUpdate(updatedEmployee);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -147,8 +171,8 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
         const ext = file.name.split('.').pop();
         const filePath = `${formData.id}/hr_${docId}.${ext}`;
 
-        const { data } = await supabase.storage.from('hr-documents').upload(filePath, file);
-        if (data) {
+        const { data, error } = await supabase.storage.from('hr-documents').upload(filePath, file);
+        if (data && !error) {
             const { data: publicData } = supabase.storage.from('hr-documents').getPublicUrl(filePath);
             const newDoc = {
                 id: docId,
@@ -162,6 +186,23 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
             const updatedEmployee = { ...formData, hrDocuments: updatedHrDocs };
             setFormData(updatedEmployee);
             onUpdate(updatedEmployee);
+        } else {
+            console.error("Storage upload failed, falling back to base64", error);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const newDoc = {
+                    id: docId,
+                    name: file.name,
+                    dataUrl: reader.result as string,
+                    uploadedAt: new Date().toISOString(),
+                    folderId: activeHrFolderId || undefined
+                };
+                const updatedHrDocs = [...(formData.hrDocuments || []), newDoc];
+                const updatedEmployee = { ...formData, hrDocuments: updatedHrDocs };
+                setFormData(updatedEmployee);
+                onUpdate(updatedEmployee);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
