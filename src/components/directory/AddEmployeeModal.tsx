@@ -19,6 +19,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         employmentStatus: 'Full Time',
         department: 'HR',
         location: '',
+        city: '',
+        country: '',
         jobTitle: '',
         reportingTo: '',
         status: 'Active',
@@ -128,7 +130,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             hire_date: formData.hireDate,
             employment_status: formData.employmentStatus,
             department: formData.department,
-            location: formData.location,
+            location: [formData.city, formData.country].filter(Boolean).join(', '),
             job_title: formData.jobTitle,
             reporting_to: formData.reportingTo,
             status: activeTab === 'quick' ? 'Onboarding' : formData.status || 'Active',
@@ -168,6 +170,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         const newEmployee: Employee = {
             ...(formData as Employee),
             id: finalId,
+            location: [formData.city, formData.country].filter(Boolean).join(', '),
             photoUrl: finalPhotoUrl || '',
             hrDocuments: finalHrDocs,
             status: activeTab === 'quick' ? 'Onboarding' : formData.status || 'Active'
@@ -210,7 +213,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         // Reset
         setFormData({
             firstName: '', lastName: '', email: '', hireDate: '', employmentStatus: 'Full Time',
-            department: 'HR', location: '', jobTitle: '', reportingTo: '', status: 'Active',
+            department: 'HR', location: '', city: '', country: '', jobTitle: '', reportingTo: '', status: 'Active',
             bankName: '', bankAccountNumber: '', photoUrl: '', hrDocuments: [],
             nationalId: '', dateOfBirth: '', taxId: '', phoneNumber: '', homeAddress: '', nationality: '', personalEmail: '', maritalStatus: '', emergencyContactName: '', emergencyContactPhone: '', emergencyContactRelationship: '', bankAccountType: '', igssAffiliation: '', gender: '', medicalConditions: '', profession: '', academicLevel: '', degreeTitle: '', bloodType: '', tShirtSize: '', contractingCompany: ''
         });
@@ -357,8 +360,25 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                                    <input name="location" value={formData.location} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                    <select name="country" value={formData.country || ''} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                        <option value="">Select Country...</option>
+                                        <option value="Guatemala">Guatemala</option>
+                                        <option value="Argentina">Argentina</option>
+                                        <option value="Mexico">Mexico</option>
+                                        <option value="Honduras">Honduras</option>
+                                        <option value="Colombia">Colombia</option>
+                                        <option value="El Salvador">El Salvador</option>
+                                        <option value="Nicaragua">Nicaragua</option>
+                                        <option value="Costa Rica">Costa Rica</option>
+                                        <option value="Panama">Panama</option>
+                                        <option value="Spain">Spain</option>
+                                        <option value="United States">United States</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                    <input name="city" value={formData.city || ''} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" placeholder="e.g. Guatemala City" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>

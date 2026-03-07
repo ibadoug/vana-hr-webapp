@@ -21,6 +21,10 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
     const [copied, setCopied] = useState(false);
     const [activeTab, setActiveTab] = useState('Personal');
 
+    // Parse location into city and country for the form
+    const [city, setCity] = useState('');
+    const [country, setCountry] = useState('');
+
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
@@ -38,6 +42,9 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
     useEffect(() => {
         if (employee) {
             setFormData(employee);
+            const [parsedCity = '', parsedCountry = ''] = (employee.location || '').split(',').map(s => s.trim());
+            setCity(parsedCity);
+            setCountry(parsedCountry);
         }
     }, [employee]);
 
@@ -57,6 +64,8 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
             setDeletingFolderId(null);
             setDeletingHrFolderId(null);
             setDeletingTimeOffId(null);
+            setCity('');
+            setCountry('');
         }
     }, [isOpen]);
 
@@ -207,12 +216,20 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
     };
 
     const handleSave = () => {
-        onUpdate(formData);
+        if (formData) {
+            const loc = [city, country].filter(Boolean).join(', ');
+            onUpdate({ ...formData, location: loc, city, country });
+        }
         setIsEditing(false);
     };
 
     const handleCancelEdit = () => {
         setFormData(employee); // Revert changes
+        if (employee) {
+            const [parsedCity = '', parsedCountry = ''] = (employee.location || '').split(',').map(s => s.trim());
+            setCity(parsedCity);
+            setCountry(parsedCountry);
+        }
         setIsEditing(false);
     };
 
@@ -433,11 +450,32 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
                                     )}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</label>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</label>
                                     {isEditing ? (
-                                        <input name="location" value={formData.location} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" />
+                                        <select value={country} onChange={(e) => setCountry(e.target.value)} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select Country...</option>
+                                            <option value="Guatemala">Guatemala</option>
+                                            <option value="Argentina">Argentina</option>
+                                            <option value="Mexico">Mexico</option>
+                                            <option value="Honduras">Honduras</option>
+                                            <option value="Colombia">Colombia</option>
+                                            <option value="El Salvador">El Salvador</option>
+                                            <option value="Nicaragua">Nicaragua</option>
+                                            <option value="Costa Rica">Costa Rica</option>
+                                            <option value="Panama">Panama</option>
+                                            <option value="Spain">Spain</option>
+                                            <option value="United States">United States</option>
+                                        </select>
                                     ) : (
-                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.location}</p>
+                                        <p className="py-1 text-gray-900 font-medium px-2">{country || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">City</label>
+                                    {isEditing ? (
+                                        <input value={city} onChange={(e) => setCity(e.target.value)} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2" placeholder="e.g. Guatemala City" />
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{city || 'Not provided'}</p>
                                     )}
                                 </div>
                                 <div className="space-y-1">

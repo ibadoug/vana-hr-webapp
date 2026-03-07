@@ -1,9 +1,9 @@
 
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { INITIAL_EMPLOYEES } from './Directory';
 import type { Employee } from '../types/Employee';
-import { Calendar, TrendingUp } from 'lucide-react';
+import { Calendar, TrendingUp, ChevronDown } from 'lucide-react';
 
 // Format MM/DD/YYYY
 const parseDate = (dateStr: string) => {
@@ -39,6 +39,43 @@ const Analytics = () => {
 
     const [granularity, setGranularity] = useState<'monthly' | 'yearly'>('yearly');
 
+    const departmentRef = useRef<HTMLDivElement>(null);
+    const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
+    const [selectedDepartments, setSelectedDepartments] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (departmentRef.current && !departmentRef.current.contains(event.target as Node)) {
+                setIsDepartmentOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const allDepartments = useMemo(() => {
+        return Array.from(new Set(employees.map(emp => emp.department || 'Unassigned'))).sort();
+    }, [employees]);
+
+    const actualSelected = selectedDepartments === null ? allDepartments : selectedDepartments;
+
+    const toggleDepartment = (dept: string) => {
+        const current = actualSelected;
+        if (current.includes(dept)) {
+            setSelectedDepartments(current.filter(d => d !== dept));
+        } else {
+            setSelectedDepartments([...current, dept]);
+        }
+    };
+
+    const toggleAllDepartments = () => {
+        if (actualSelected.length === allDepartments.length) {
+            setSelectedDepartments([]);
+        } else {
+            setSelectedDepartments(allDepartments);
+        }
+    };
+
     useEffect(() => {
         const saved = localStorage.getItem('vana_employees');
         if (saved) {
@@ -53,8 +90,12 @@ const Analytics = () => {
     }, []);
 
     const chartData = useMemo(() => {
-        // Only active employees
-        const activeEmployees = employees.filter(emp => emp.status !== 'Inactive');
+        // Only active employees in selected departments
+        const activeEmployees = employees.filter(emp => {
+            if (emp.status === 'Inactive') return false;
+            const dept = emp.department || 'Unassigned';
+            return actualSelected.includes(dept);
+        });
 
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -99,7 +140,7 @@ const Analytics = () => {
         }
 
         return dataPoints;
-    }, [employees, startDate, endDate, granularity]);
+    }, [employees, startDate, endDate, granularity, actualSelected]);
 
     // SVG parameters
     const width = 800;
@@ -123,56 +164,109 @@ const Analytics = () => {
 
     return (
         <div className="p-8 max-w-6xl mx-auto space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Analytics</h1>
-                    <p className="text-gray-500 mt-1">Track company growth and headcount over time.</p>
+            <div className="mb-2">
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Analytics</h1>
+                <p className="text-gray-500 mt-1">Track company growth and headcount over time.</p>
+            </div>
+
+            {/* Sticky Filters Bar */}
+            <div className="sticky top-[80px] z-20 bg-white/95 backdrop-blur-md px-5 py-4 rounded-xl shadow-md border border-gray-200 flex flex-wrap items-end gap-5">
+                {/* Granularity */}
+                <div className="w-full sm:w-auto space-y-1">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        Timeframe
+                    </label>
+                    <div className="flex bg-gray-50/50 shadow-sm border border-gray-200 rounded-lg p-1 h-[42px] items-center">
+                        <button
+                            onClick={() => setGranularity('monthly')}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${granularity === 'monthly' ? 'bg-[#4F7BFE] text-white shadow' : 'text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            Monthly
+                        </button>
+                        <button
+                            onClick={() => setGranularity('yearly')}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${granularity === 'yearly' ? 'bg-[#4F7BFE] text-white shadow' : 'text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            Yearly
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex bg-white shadow-sm border border-gray-200 rounded-lg p-1">
+                {/* Start Date */}
+                <div className="w-full sm:w-48 space-y-1">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <Calendar size={14} className="text-gray-400" /> Start Date
+                    </label>
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        onClick={(e) => (e.target as any).showPicker?.()}
+                        className="w-full px-3 py-1.5 h-[42px] border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4F7BFE] outline-none cursor-pointer bg-white"
+                    />
+                </div>
+
+                {/* End Date */}
+                <div className="w-full sm:w-48 space-y-1">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <Calendar size={14} className="text-gray-400" /> End Date
+                    </label>
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        onClick={(e) => (e.target as any).showPicker?.()}
+                        className="w-full px-3 py-1.5 h-[42px] border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4F7BFE] outline-none cursor-pointer bg-white"
+                    />
+                </div>
+
+                {/* Department */}
+                <div className="flex-1 min-w-[200px] max-w-sm space-y-1 relative" ref={departmentRef}>
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        Departments
+                    </label>
                     <button
-                        onClick={() => setGranularity('monthly')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${granularity === 'monthly' ? 'bg-[#4F7BFE] text-white shadow' : 'text-gray-600 hover:bg-gray-50'}`}
+                        onClick={() => setIsDepartmentOpen(!isDepartmentOpen)}
+                        className="w-full h-[42px] flex items-center justify-between px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white hover:bg-gray-50 focus:ring-2 focus:ring-[#4F7BFE] outline-none text-left shadow-sm"
                     >
-                        Monthly
+                        <span className="truncate">
+                            {actualSelected.length === allDepartments.length
+                                ? 'All Departments'
+                                : actualSelected.length === 0
+                                    ? 'None Selected'
+                                    : `${actualSelected.length} Selected`}
+                        </span>
+                        <ChevronDown size={16} className={`text-gray-400 transition-transform ${isDepartmentOpen ? 'rotate-180' : ''}`} />
                     </button>
-                    <button
-                        onClick={() => setGranularity('yearly')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${granularity === 'yearly' ? 'bg-[#4F7BFE] text-white shadow' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        Yearly
-                    </button>
+
+                    {isDepartmentOpen && (
+                        <div className="absolute z-10 top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto">
+                            <label className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm font-medium border-b border-gray-100 mb-1">
+                                <input
+                                    type="checkbox"
+                                    checked={actualSelected.length === allDepartments.length && allDepartments.length > 0}
+                                    onChange={toggleAllDepartments}
+                                    className="mr-3 rounded border-gray-300 text-[#4F7BFE] focus:ring-[#4F7BFE]"
+                                />
+                                Select All
+                            </label>
+                            {allDepartments.map(dept => (
+                                <label key={dept} className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={actualSelected.includes(dept)}
+                                        onChange={() => toggleDepartment(dept)}
+                                        className="mr-3 rounded border-gray-300 text-[#4F7BFE] focus:ring-[#4F7BFE]"
+                                    />
+                                    {dept}
+                                </label>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                    <div className="w-full sm:w-48 space-y-1">
-                        <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                            <Calendar size={14} className="text-gray-400" /> Start Date
-                        </label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            onClick={(e) => (e.target as any).showPicker?.()}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4F7BFE] outline-none cursor-pointer"
-                        />
-                    </div>
-                    <div className="w-full sm:w-48 space-y-1">
-                        <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                            <Calendar size={14} className="text-gray-400" /> End Date
-                        </label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            onClick={(e) => (e.target as any).showPicker?.()}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4F7BFE] outline-none cursor-pointer"
-                        />
-                    </div>
-                </div>
-
                 <div className="border border-gray-100 rounded-lg bg-gray-50/30 p-4">
                     <div className="flex items-center gap-2 mb-4 px-4">
                         <div className="w-8 h-8 rounded bg-[#EEF2FF] flex items-center justify-center">

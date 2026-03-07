@@ -32,6 +32,8 @@ export interface Employee {
     employmentStatus: 'Full Time' | 'Part Time' | 'Contractor' | 'Intern';
     department: 'HR' | 'Data Science' | 'BI' | 'Engineering' | 'Sales' | 'Marketing' | 'Product' | 'Customer Support' | 'Lending Ops' | 'Legal' | 'Compliance' | 'Finance' | 'Risk' | 'Collection' | string;
     location: string;
+    city?: string; // Derived from location or added for forms
+    country?: string; // Derived from location or added for forms
     jobTitle: string;
     reportingTo: string; // Name of manager
     status: 'Active' | 'Inactive' | 'Onboarding' | 'Pending Approval';

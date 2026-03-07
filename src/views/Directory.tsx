@@ -163,9 +163,9 @@ const Directory = () => {
                 case 'Name': return emp.firstName.toLowerCase().includes(q);
                 case 'Last Name': return emp.lastName.toLowerCase().includes(q);
                 case 'Employment Status': return emp.employmentStatus.toLowerCase().includes(q);
-                case 'Department': return emp.department.toLowerCase().includes(q);
-                case 'Location': return emp.location.toLowerCase().includes(q);
-                case 'Job Title': return emp.jobTitle.toLowerCase().includes(q);
+                case 'Department': return (emp.department || '').toLowerCase().includes(q);
+                case 'City, Country': return (emp.location || '').toLowerCase().includes(q);
+                case 'Job Title': return (emp.jobTitle || '').toLowerCase().includes(q);
                 default: return true;
             }
         });
@@ -324,7 +324,7 @@ const Directory = () => {
                                             )}
                                         </div>
                                         <div className="max-h-64 overflow-y-auto p-2 space-y-1">
-                                            {['Name', 'Last Name', 'Employment Status', 'Department', 'Location', 'Job Title'].map(category => (
+                                            {['Name', 'Last Name', 'Employment Status', 'Department', 'City, Country', 'Job Title'].map(category => (
                                                 <button
                                                     key={category}
                                                     onClick={() => { setFilterCategory(category); setIsFilterOpen(false); }}
@@ -383,7 +383,7 @@ const Directory = () => {
                                     <th className="px-6 py-3 font-medium border-b border-gray-200">Hire Date</th>
                                     <th className="px-6 py-3 font-medium border-b border-gray-200">Employment Status</th>
                                     <th className="px-6 py-3 font-medium border-b border-gray-200">Department</th>
-                                    <th className="px-6 py-3 font-medium border-b border-gray-200">Location</th>
+                                    <th className="px-6 py-3 font-medium border-b border-gray-200">City, Country</th>
                                     <th className="px-6 py-3 font-medium border-b border-gray-200">Job Title</th>
                                     <th className="px-6 py-3 font-medium border-b border-gray-200">Reporting To</th>
                                 </tr>

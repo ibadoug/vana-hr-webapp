@@ -87,7 +87,12 @@ const PublicEmployeeProfile = () => {
                         if (found.status === 'Onboarding') {
                             setIsOnboardingSetup(true);
                             setActiveTab('Setup Required');
-                            setSetupFormData(found);
+                            const [parsedCity = '', parsedCountry = ''] = (found.location || '').split(',').map(s => s.trim());
+                            setSetupFormData({
+                                ...found,
+                                city: parsedCity,
+                                country: parsedCountry
+                            });
                         }
                     }
                 }
@@ -164,6 +169,7 @@ const PublicEmployeeProfile = () => {
         const completeEmployee: Employee = {
             ...employee,
             ...setupFormData,
+            location: [setupFormData.city, setupFormData.country].filter(Boolean).join(', '),
             status: 'Pending Approval',
         };
 
@@ -448,7 +454,7 @@ const PublicEmployeeProfile = () => {
                                     <p className="text-gray-900 font-medium">{employee.department}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Location</p>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">City, Country</p>
                                     <p className="text-gray-900 font-medium">{employee.location}</p>
                                 </div>
                                 <div>
@@ -619,8 +625,25 @@ const PublicEmployeeProfile = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                                        <input name="location" value={setupFormData.location || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                        <select name="country" value={setupFormData.country || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Country...</option>
+                                            <option value="Guatemala">Guatemala</option>
+                                            <option value="Argentina">Argentina</option>
+                                            <option value="Mexico">Mexico</option>
+                                            <option value="Honduras">Honduras</option>
+                                            <option value="Colombia">Colombia</option>
+                                            <option value="El Salvador">El Salvador</option>
+                                            <option value="Nicaragua">Nicaragua</option>
+                                            <option value="Costa Rica">Costa Rica</option>
+                                            <option value="Panama">Panama</option>
+                                            <option value="Spain">Spain</option>
+                                            <option value="United States">United States</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                        <input name="city" value={setupFormData.city || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" placeholder="e.g. Guatemala City" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
