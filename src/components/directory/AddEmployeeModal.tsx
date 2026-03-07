@@ -48,7 +48,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         degreeTitle: '',
         bloodType: '',
         tShirtSize: '',
-        contractingCompany: ''
+        contractingCompany: '',
+        legalEntity: ''
     });
     const [sendOnboardingEmail, setSendOnboardingEmail] = useState(false);
     const [activeTab, setActiveTab] = useState<'quick' | 'full'>('quick');
@@ -157,7 +158,8 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             degree_title: formData.degreeTitle,
             blood_type: formData.bloodType,
             t_shirt_size: formData.tShirtSize,
-            contracting_company: formData.contractingCompany
+            contracting_company: formData.contractingCompany,
+            legal_entity: formData.legalEntity
         }]);
 
         if (dbError) {
@@ -173,6 +175,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             location: [formData.city, formData.country].filter(Boolean).join(', '),
             photoUrl: finalPhotoUrl || '',
             hrDocuments: finalHrDocs,
+            legalEntity: formData.legalEntity,
             status: activeTab === 'quick' ? 'Onboarding' : formData.status || 'Active'
         };
 
@@ -215,7 +218,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
             firstName: '', lastName: '', email: '', hireDate: '', employmentStatus: 'Full Time',
             department: 'HR', location: '', city: '', country: '', jobTitle: '', reportingTo: '', status: 'Active',
             bankName: '', bankAccountNumber: '', photoUrl: '', hrDocuments: [],
-            nationalId: '', dateOfBirth: '', taxId: '', phoneNumber: '', homeAddress: '', nationality: '', personalEmail: '', maritalStatus: '', emergencyContactName: '', emergencyContactPhone: '', emergencyContactRelationship: '', bankAccountType: '', igssAffiliation: '', gender: '', medicalConditions: '', profession: '', academicLevel: '', degreeTitle: '', bloodType: '', tShirtSize: '', contractingCompany: ''
+            nationalId: '', dateOfBirth: '', taxId: '', phoneNumber: '', homeAddress: '', nationality: '', personalEmail: '', maritalStatus: '', emergencyContactName: '', emergencyContactPhone: '', emergencyContactRelationship: '', bankAccountType: '', igssAffiliation: '', gender: '', medicalConditions: '', profession: '', academicLevel: '', degreeTitle: '', bloodType: '', tShirtSize: '', contractingCompany: '', legalEntity: ''
         });
         setSendOnboardingEmail(false);
         setGeneratedId('');

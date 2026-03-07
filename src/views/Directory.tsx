@@ -108,7 +108,8 @@ const Directory = () => {
                     degreeTitle: emp.degree_title,
                     bloodType: emp.blood_type,
                     tShirtSize: emp.t_shirt_size,
-                    contractingCompany: emp.contracting_company
+                    contractingCompany: emp.contracting_company,
+                    legalEntity: emp.legal_entity
                 })) as Employee[];
                 setEmployees(formatted);
             }
@@ -129,20 +130,32 @@ const Directory = () => {
     const [filterCategory, setFilterCategory] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<'Active' | 'Inactive' | 'All'>('Active');
     const [viewMode, setViewMode] = useState<'list' | 'orgChart'>('list');
-    const [orgChartDepartment, setOrgChartDepartment] = useState<string>('All');
+    const [departmentFilters, setDepartmentFilters] = useState<string[]>([]);
+    const [legalEntityFilters, setLegalEntityFilters] = useState<string[]>([]);
+    const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
+    const [isLegalDropdownOpen, setIsLegalDropdownOpen] = useState(false);
 
     const departments = useMemo(() => {
         const deps = new Set(employees.map(emp => emp.department).filter(Boolean));
         return Array.from(deps).sort();
     }, [employees]);
 
+    const legalEntities = useMemo(() => {
+        const entities = new Set(employees.map(emp => emp.legalEntity).filter(Boolean));
+        return Array.from(entities).sort() as string[];
+    }, [employees]);
+
     // Multi-criteria filter
     const filteredEmployees = useMemo(() => {
         const baseEmployees = employees.filter(emp => emp.status !== 'Onboarding' && emp.status !== 'Pending Approval')
             .filter(emp => {
-                if (statusFilter === 'All') return true;
-                const currentStatus = emp.status || 'Active';
-                return currentStatus === statusFilter;
+                if (statusFilter !== 'All') {
+                    const currentStatus = emp.status || 'Active';
+                    if (currentStatus !== statusFilter) return false;
+                }
+                if (departmentFilters.length > 0 && !departmentFilters.includes(emp.department)) return false;
+                if (legalEntityFilters.length > 0 && !legalEntityFilters.includes(emp.legalEntity || '')) return false;
+                return true;
             });
 
         if (!searchQuery) return baseEmployees;
@@ -169,7 +182,7 @@ const Directory = () => {
                 default: return true;
             }
         });
-    }, [employees, searchQuery, filterCategory, statusFilter]);
+    }, [employees, searchQuery, filterCategory, statusFilter, departmentFilters, legalEntityFilters]);
 
     const handleAddEmployee = () => {
         // Add action is handled by the modal DB insert already
@@ -221,7 +234,8 @@ const Directory = () => {
             degree_title: updatedEmp.degreeTitle,
             blood_type: updatedEmp.bloodType,
             t_shirt_size: updatedEmp.tShirtSize,
-            contracting_company: updatedEmp.contractingCompany
+            contracting_company: updatedEmp.contractingCompany,
+            legal_entity: updatedEmp.legalEntity
         }).eq('id', updatedEmp.id);
 
         if (error) {
@@ -253,24 +267,90 @@ const Directory = () => {
                     <h1 className="text-2xl font-bold text-[#4F7BFE] tracking-tight">Directory</h1>
                 </div>
                 <div className="flex items-center gap-4">
-                    {viewMode === 'orgChart' && (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600 font-medium hidden sm:inline-block">Department:</span>
                             <div className="relative">
-                                <select
-                                    className="appearance-none border border-gray-300 rounded-lg bg-white py-1.5 pl-3 pr-8 text-sm outline-none focus:ring-2 focus:ring-[#4F7BFE]/50 shadow-sm text-gray-700"
-                                    value={orgChartDepartment}
-                                    onChange={(e) => setOrgChartDepartment(e.target.value)}
+                                <button
+                                    onClick={() => { setIsDeptDropdownOpen(!isDeptDropdownOpen); setIsLegalDropdownOpen(false); }}
+                                    className="flex items-center justify-between border border-gray-300 rounded-lg bg-white py-1.5 px-3 text-sm outline-none focus:ring-2 focus:ring-[#4F7BFE]/50 shadow-sm text-gray-700 min-w-[140px]"
                                 >
-                                    <option value="All">All Departments</option>
-                                    {departments.map(dep => (
-                                        <option key={dep} value={dep}>{dep}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-2 text-gray-500 pointer-events-none" />
+                                    <span className="truncate mr-2">
+                                        {departmentFilters.length === 0 ? 'All Departments' : `${departmentFilters.length} Selected`}
+                                    </span>
+                                    <ChevronDown size={14} className="text-gray-500" />
+                                </button>
+                                {isDeptDropdownOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setIsDeptDropdownOpen(false)}></div>
+                                        <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-20 py-1 max-h-60 overflow-y-auto">
+                                            <div className="px-3 py-2 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
+                                                <span className="text-xs font-semibold text-gray-500 uppercase">Departments</span>
+                                                {departmentFilters.length > 0 && (
+                                                    <button onClick={() => setDepartmentFilters([])} className="text-xs text-[#4F7BFE] hover:underline">Clear</button>
+                                                )}
+                                            </div>
+                                            {departments.map(dep => (
+                                                <label key={dep} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="mr-2 rounded border-gray-300 text-[#4F7BFE] focus:ring-[#4F7BFE]"
+                                                        checked={departmentFilters.includes(dep)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) setDepartmentFilters([...departmentFilters, dep]);
+                                                            else setDepartmentFilters(departmentFilters.filter(d => d !== dep));
+                                                        }}
+                                                    />
+                                                    <span className="text-sm text-gray-700">{dep}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
-                    )}
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 font-medium hidden sm:inline-block">Legal Entity:</span>
+                            <div className="relative">
+                                <button
+                                    onClick={() => { setIsLegalDropdownOpen(!isLegalDropdownOpen); setIsDeptDropdownOpen(false); }}
+                                    className="flex items-center justify-between border border-gray-300 rounded-lg bg-white py-1.5 px-3 text-sm outline-none focus:ring-2 focus:ring-[#4F7BFE]/50 shadow-sm text-gray-700 min-w-[140px]"
+                                >
+                                    <span className="truncate mr-2">
+                                        {legalEntityFilters.length === 0 ? 'All Entities' : `${legalEntityFilters.length} Selected`}
+                                    </span>
+                                    <ChevronDown size={14} className="text-gray-500" />
+                                </button>
+                                {isLegalDropdownOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setIsLegalDropdownOpen(false)}></div>
+                                        <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-20 py-1 max-h-60 overflow-y-auto">
+                                            <div className="px-3 py-2 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
+                                                <span className="text-xs font-semibold text-gray-500 uppercase">Legal Entities</span>
+                                                {legalEntityFilters.length > 0 && (
+                                                    <button onClick={() => setLegalEntityFilters([])} className="text-xs text-[#4F7BFE] hover:underline">Clear</button>
+                                                )}
+                                            </div>
+                                            {legalEntities.map(ent => (
+                                                <label key={ent} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="mr-2 rounded border-gray-300 text-[#4F7BFE] focus:ring-[#4F7BFE]"
+                                                        checked={legalEntityFilters.includes(ent)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) setLegalEntityFilters([...legalEntityFilters, ent]);
+                                                            else setLegalEntityFilters(legalEntityFilters.filter(d => d !== ent));
+                                                        }}
+                                                    />
+                                                    <span className="text-sm text-gray-700">{ent}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                     <div className="hidden sm:flex bg-gray-100 p-1 rounded-lg items-center border border-gray-200">
                         <button
                             onClick={() => setViewMode('list')}
@@ -444,7 +524,8 @@ const Directory = () => {
                             emp.status !== 'Inactive' &&
                             emp.status !== 'Onboarding' &&
                             emp.status !== 'Pending Approval' &&
-                            (orgChartDepartment === 'All' || emp.department === orgChartDepartment)
+                            (departmentFilters.length === 0 || departmentFilters.includes(emp.department)) &&
+                            (legalEntityFilters.length === 0 || legalEntityFilters.includes(emp.legalEntity || ''))
                         )}
                         onNodeClick={(emp) => setSelectedEmployee(emp)}
                     />

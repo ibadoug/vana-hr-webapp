@@ -40,7 +40,8 @@ const Admin = () => {
                     department: emp.department,
                     photoUrl: emp.photo_url,
                     status: emp.status,
-                    hireDate: emp.hire_date
+                    hireDate: emp.hire_date,
+                    legalEntity: emp.legal_entity
                 })) as Employee[];
                 setPendingEmployees(formatted);
             }

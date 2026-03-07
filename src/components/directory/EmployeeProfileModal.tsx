@@ -523,6 +523,19 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
                                     )}
                                 </div>
                                 <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Legal Entity *</label>
+                                    {isEditing ? (
+                                        <select required name="legalEntity" value={formData.legalEntity || ''} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
+                                            <option value="">Select Legal Entity</option>
+                                            <option value="Easy, S.A.">Easy, S.A.</option>
+                                            <option value="Vana Tech, S.A.">Vana Tech, S.A.</option>
+                                            <option value="Vana Mas S.A.">Vana Mas S.A.</option>
+                                        </select>
+                                    ) : (
+                                        <p className="py-1 text-gray-900 font-medium px-2">{formData.legalEntity || 'Not provided'}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
                                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</label>
                                     {isEditing ? (
                                         <select name="status" value={formData.status ?? 'Active'} onChange={handleChange} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">

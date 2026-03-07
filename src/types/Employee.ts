@@ -46,6 +46,8 @@ export interface Employee {
     hrDocuments?: EmployeeDocument[]; // Support for HR specific documents
     hrDocumentFolders?: DocumentFolder[]; // Support for grouping HR documents into folders
     timeOffRequests?: TimeOffRequest[]; // Support for time off requests
+    legalEntity?: string; // Support for legal entity of employment
+
 
     // Onboarding form fields
     nationalId?: string; // DPI/DNI

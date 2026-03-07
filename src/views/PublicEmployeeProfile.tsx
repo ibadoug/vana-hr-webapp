@@ -76,7 +76,8 @@ const PublicEmployeeProfile = () => {
                         degreeTitle: emp.degree_title,
                         bloodType: emp.blood_type,
                         tShirtSize: emp.t_shirt_size,
-                        contractingCompany: emp.contracting_company
+                        contractingCompany: emp.contracting_company,
+                        legalEntity: emp.legal_entity
                     })) as Employee[];
 
                     setAllEmployees(formattedAll);
@@ -146,7 +147,8 @@ const PublicEmployeeProfile = () => {
             degree_title: updatedEmp.degreeTitle,
             blood_type: updatedEmp.bloodType,
             t_shirt_size: updatedEmp.tShirtSize,
-            contracting_company: updatedEmp.contractingCompany
+            contracting_company: updatedEmp.contractingCompany,
+            legal_entity: updatedEmp.legalEntity
         }).eq('id', updatedEmp.id);
 
         if (error) {
