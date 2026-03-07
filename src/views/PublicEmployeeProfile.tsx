@@ -164,12 +164,32 @@ const PublicEmployeeProfile = () => {
         const completeEmployee: Employee = {
             ...employee,
             ...setupFormData,
-            status: 'Active'
-        } as Employee;
+            status: 'Active',
+        };
 
         updateEmployeeInDb(completeEmployee);
         setIsOnboardingSetup(false);
         setActiveTab('Personal');
+    };
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && id) {
+            const ext = file.name.split('.').pop();
+            const filePath = `${id}/avatar_${Date.now()}.${ext}`;
+            const { data, error } = await supabase.storage.from('avatars').upload(filePath, file);
+            if (data && !error) {
+                const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                setSetupFormData(prev => ({ ...prev, photoUrl: publicData.publicUrl }));
+            } else {
+                // Base64 fallback
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setSetupFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
+                };
+                reader.readAsDataURL(file);
+            }
+        }
     };
 
     const pendingApprovals = employee ? allEmployees.reduce((acc, emp) => {
@@ -327,60 +347,64 @@ const PublicEmployeeProfile = () => {
             <main className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
                 {/* Profile Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="bg-gradient-to-r from-[#EEF2FF] to-white p-6 sm:p-8 flex items-center gap-6">
-                        {employee.photoUrl ? (
-                            <img src={employee.photoUrl} alt={employee.firstName} className="w-24 h-24 rounded-full object-cover shadow-sm ring-4 ring-white" />
-                        ) : (
-                            <div className="w-24 h-24 rounded-full bg-white text-[#4F7BFE] flex items-center justify-center font-bold text-3xl shadow-sm ring-4 ring-gray-50">
-                                {employee.firstName[0]}{employee.lastName[0]}
+                {(!isOnboardingSetup || activeTab !== 'Setup Required') && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="bg-gradient-to-r from-[#EEF2FF] to-white p-6 sm:p-8 flex items-center gap-6">
+                            {employee.photoUrl ? (
+                                <img src={employee.photoUrl} alt={employee.firstName} className="w-24 h-24 rounded-full object-cover shadow-sm ring-4 ring-white" />
+                            ) : (
+                                <div className="w-24 h-24 rounded-full bg-white text-[#4F7BFE] flex items-center justify-center font-bold text-3xl shadow-sm ring-4 ring-gray-50">
+                                    {employee.firstName[0]}{employee.lastName[0]}
+                                </div>
+                            )}
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 mb-1">{employee.firstName} {employee.lastName}</h1>
+                                <p className="text-lg font-medium text-[#4F7BFE]">{employee.jobTitle}</p>
+                                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 font-medium">
+                                    <ShieldAlert size={14} className="text-amber-500" />
+                                    <span>Read-Only View</span>
+                                </div>
                             </div>
-                        )}
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-1">{employee.firstName} {employee.lastName}</h1>
-                            <p className="text-lg font-medium text-[#4F7BFE]">{employee.jobTitle}</p>
-                            <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 font-medium">
-                                <ShieldAlert size={14} className="text-amber-500" />
-                                <span>Read-Only View</span>
+                            <div className="ml-auto">
+                                <button
+                                    onClick={() => setIsTimeOffModalOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#4F7BFE] text-white font-semibold rounded hover:bg-[#3B5BDB] transition-colors"
+                                >
+                                    <CalendarIcon size={18} />
+                                    Request Time Off
+                                </button>
                             </div>
-                        </div>
-                        <div className="ml-auto">
-                            <button
-                                onClick={() => setIsTimeOffModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#4F7BFE] text-white font-semibold rounded hover:bg-[#3B5BDB] transition-colors"
-                            >
-                                <CalendarIcon size={18} />
-                                Request Time Off
-                            </button>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Tabs & Content Container */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     {/* Tabs */}
-                    <div className="bg-[#2744A0] px-6 flex items-end shrink-0 pt-2 shadow-inner overflow-x-auto">
-                        {tabs.map(tab => {
-                            const showBadge = tab === 'Approval' && pendingApprovals.length > 0;
-                            return (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`px-5 py-2.5 font-medium text-sm transition-colors cursor-pointer focus:outline-none whitespace-nowrap flex items-center gap-2 ${activeTab === tab
-                                        ? 'bg-white text-[#2744A0] rounded-t-lg'
-                                        : 'text-white/90 hover:bg-white/20 hover:text-white hover:rounded-t-lg'
-                                        }`}
-                                >
-                                    {tab}
-                                    {showBadge && (
-                                        <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                                            {pendingApprovals.length}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
+                    {(!isOnboardingSetup || activeTab !== 'Setup Required') && (
+                        <div className="bg-[#2744A0] px-6 flex items-end shrink-0 pt-2 shadow-inner overflow-x-auto">
+                            {tabs.map(tab => {
+                                const showBadge = tab === 'Approval' && pendingApprovals.length > 0;
+                                return (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`px-5 py-2.5 font-medium text-sm transition-colors cursor-pointer focus:outline-none whitespace-nowrap flex items-center gap-2 ${activeTab === tab
+                                            ? 'bg-white text-[#2744A0] rounded-t-lg'
+                                            : 'text-white/90 hover:bg-white/20 hover:text-white hover:rounded-t-lg'
+                                            }`}
+                                    >
+                                        {tab}
+                                        {showBadge && (
+                                            <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                                {pendingApprovals.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     <div className="bg-white">
                         {activeTab === 'Personal' && (
@@ -523,24 +547,93 @@ const PublicEmployeeProfile = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Pre-filled read-only fields */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                                        <input disabled value={employee.firstName} className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-500" />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                                        <input required name="firstName" value={setupFormData.firstName || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                                        <input disabled value={employee.lastName} className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-500" />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                                        <input required name="lastName" value={setupFormData.lastName || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Personal Email</label>
-                                        <input disabled value={employee.personalEmail || ''} className="w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-500" />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Personal Email *</label>
+                                        <input required type="email" name="personalEmail" value={setupFormData.personalEmail || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                     </div>
 
-                                    {/* Editable fields */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                                        <input type="date" name="dateOfBirth" value={setupFormData.dateOfBirth || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                        <input required type="email" name="email" value={setupFormData.email || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Job Title *</label>
+                                        <input required name="jobTitle" value={setupFormData.jobTitle || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                        <select name="department" value={setupFormData.department || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="HR">HR</option>
+                                            <option value="Data Science">Data Science</option>
+                                            <option value="BI">BI</option>
+                                            <option value="Engineering">Engineering</option>
+                                            <option value="Sales">Sales</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Product">Product</option>
+                                            <option value="Customer Support">Customer Support</option>
+                                            <option value="Lending Ops">Lending Ops</option>
+                                            <option value="Legal">Legal</option>
+                                            <option value="Compliance">Compliance</option>
+                                            <option value="Finance">Finance</option>
+                                            <option value="Risk">Risk</option>
+                                            <option value="Collection">Collection</option>
+                                            <option value="Corporate">Corporate</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                                        <input name="location" value={setupFormData.location || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
+                                        <input type="date" name="hireDate" value={setupFormData.hireDate || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Employment Status</label>
+                                        <select name="employmentStatus" value={setupFormData.employmentStatus || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="Full Time">Full Time</option>
+                                            <option value="Part Time">Part Time</option>
+                                            <option value="Contractor">Contractor</option>
+                                            <option value="Intern">Intern</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Reporting To</label>
+                                        <select name="reportingTo" value={setupFormData.reportingTo || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">None / CEO</option>
+                                            {allEmployees.map(emp => {
+                                                const fullName = `${emp.firstName} ${emp.lastName}`;
+                                                return (
+                                                    <option key={emp.id} value={fullName}>
+                                                        {fullName}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                                        <input name="bankName" value={setupFormData.bankName || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" placeholder="e.g. Chase" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Bank Account Number</label>
+                                        <input name="bankAccountNumber" value={setupFormData.bankAccountNumber || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" placeholder="Account Number" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Bank Account Type</label>
+                                        <select name="bankAccountType" value={setupFormData.bankAccountType || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Account Type</option>
+                                            <option value="Monetaria">Monetaria</option>
+                                            <option value="Ahorro">Ahorro</option>
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">National ID (DPI/DNI)</label>
@@ -551,6 +644,69 @@ const PublicEmployeeProfile = () => {
                                         <input name="taxId" value={setupFormData.taxId || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                     </div>
                                     <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                                        <input type="date" name="dateOfBirth" value={setupFormData.dateOfBirth || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                                        <select name="nationality" value={setupFormData.nationality || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Nationality</option>
+                                            <option value="Guatemalteca">Guatemalteca</option>
+                                            <option value="Argentina">Argentina</option>
+                                            <option value="Mexicana">Mexicana</option>
+                                            <option value="Hondureña">Hondureña</option>
+                                            <option value="Colombiana">Colombiana</option>
+                                            <option value="Salvadoreña">Salvadoreña</option>
+                                            <option value="Nicaragüense">Nicaragüense</option>
+                                            <option value="Española">Española</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                        <select name="gender" value={setupFormData.gender || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Gender</option>
+                                            <option value="Hombre">Hombre</option>
+                                            <option value="Mujer">Mujer</option>
+                                            <option value="Prefiero no decirlo">Prefiero no decirlo</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
+                                        <select name="maritalStatus" value={setupFormData.maritalStatus || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Marital Status</option>
+                                            <option value="Soltero">Soltero</option>
+                                            <option value="Casado">Casado</option>
+                                            <option value="Divorciado">Divorciado</option>
+                                            <option value="Viudo">Viudo</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Blood Type</label>
+                                        <select name="bloodType" value={setupFormData.bloodType || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Blood Type</option>
+                                            <option value="A+">A+</option>
+                                            <option value="A-">A-</option>
+                                            <option value="B+">B+</option>
+                                            <option value="B-">B-</option>
+                                            <option value="AB+">AB+</option>
+                                            <option value="AB-">AB-</option>
+                                            <option value="O+">O+</option>
+                                            <option value="O-">O-</option>
+                                            <option value="No sé">No sé</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">T-Shirt Size</label>
+                                        <select name="tShirtSize" value={setupFormData.tShirtSize || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Size</option>
+                                            <option value="XS">XS</option>
+                                            <option value="S">S</option>
+                                            <option value="M">M</option>
+                                            <option value="L">L</option>
+                                            <option value="XL">XL</option>
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                                         <input name="phoneNumber" value={setupFormData.phoneNumber || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                     </div>
@@ -559,25 +715,71 @@ const PublicEmployeeProfile = () => {
                                         <input name="homeAddress" value={setupFormData.homeAddress || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
-                                        <input name="nationality" value={setupFormData.nationality || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
-                                        <select name="maritalStatus" value={setupFormData.maritalStatus || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
-                                            <option value="">Select...</option>
-                                            <option value="Soltero">Soltero/a</option>
-                                            <option value="Casado">Casado/a</option>
-                                            <option value="Unido">Unido/a</option>
-                                        </select>
-                                    </div>
-                                    <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Name</label>
                                         <input name="emergencyContactName" value={setupFormData.emergencyContactName || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
                                         <input name="emergencyContactPhone" value={setupFormData.emergencyContactPhone || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Relationship</label>
+                                        <input name="emergencyContactRelationship" value={setupFormData.emergencyContactRelationship || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">IGSS Affiliation Number</label>
+                                        <input name="igssAffiliation" value={setupFormData.igssAffiliation || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Medical Conditions (Allergies, etc.)</label>
+                                        <input name="medicalConditions" value={setupFormData.medicalConditions || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" placeholder="Leave blank if none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                                        <input name="profession" value={setupFormData.profession || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Academic Level</label>
+                                        <select name="academicLevel" value={setupFormData.academicLevel || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Level</option>
+                                            <option value="Diversificado">Diversificado</option>
+                                            <option value="Técnico">Técnico</option>
+                                            <option value="Universidad incompleta">Universidad incompleta</option>
+                                            <option value="Estudiante regular">Estudiante regular</option>
+                                            <option value="Pensum cerrado">Pensum cerrado</option>
+                                            <option value="Graduado">Graduado</option>
+                                            <option value="Postgrado">Postgrado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Degree Title</label>
+                                        <input name="degreeTitle" value={setupFormData.degreeTitle || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contracting Company</label>
+                                        <select name="contractingCompany" value={setupFormData.contractingCompany || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
+                                            <option value="">Select Company</option>
+                                            <option value="Compa Labs Guatemala">Compa Labs Guatemala</option>
+                                            <option value="Vana Trust y Vana GT">Vana Trust y Vana GT</option>
+                                            <option value="Comun">Comun</option>
+                                        </select>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Employee Photo (Optional)</label>
+                                        <div className="flex items-center gap-4">
+                                            {setupFormData.photoUrl && (
+                                                <img src={setupFormData.photoUrl} alt="Preview" className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleAvatarUpload}
+                                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#EEF2FF] file:text-[#4F7BFE] hover:file:bg-[#DCE4FF] cursor-pointer"
+                                            />
+                                            {setupFormData.photoUrl && (
+                                                <button type="button" onClick={() => setSetupFormData({ ...setupFormData, photoUrl: '' })} className="text-xs text-red-500 hover:text-red-700 font-medium">Remove</button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
