@@ -31,22 +31,54 @@ const PublicEmployeeProfile = () => {
 
     useEffect(() => {
         // Simulate an API fetch using the local storage mock DB
+        let employees: Employee[] = [];
         const saved = localStorage.getItem('vana_employees');
         if (saved) {
             try {
-                const employees: Employee[] = JSON.parse(saved);
-                setAllEmployees(employees);
-                const found = employees.find(emp => emp.id === id);
-                if (found) {
-                    setEmployee(found);
-                    if (found.status === 'Onboarding') {
-                        setIsOnboardingSetup(true);
-                        setActiveTab('Setup Required');
-                        setSetupFormData(found);
-                    }
-                }
+                employees = JSON.parse(saved);
             } catch (e) {
                 console.error("Failed to parse directory", e);
+            }
+        }
+
+        let found = employees.find(emp => emp.id === id);
+
+        // Fallback for cross-device testing where Local Storage doesn't naturally exist
+        if (!found && id) {
+            const searchParams = new URLSearchParams(window.location.search);
+            const fallbackData = searchParams.get('fallback');
+            if (fallbackData) {
+                try {
+                    const parsedData = JSON.parse(decodeURIComponent(atob(fallbackData)));
+                    found = {
+                        id,
+                        firstName: parsedData.firstName || 'New',
+                        lastName: parsedData.lastName || 'Employee',
+                        personalEmail: parsedData.personalEmail || '',
+                        email: parsedData.personalEmail || '',
+                        department: parsedData.department || 'Company',
+                        jobTitle: parsedData.jobTitle || 'Role',
+                        status: 'Onboarding',
+                        employmentStatus: 'Full Time',
+                        location: 'Headquarters',
+                        reportingTo: 'Manager',
+                        hireDate: new Date().toLocaleDateString()
+                    };
+                    employees.push(found); // push to array so saving functions work
+                } catch (e) {
+                    console.error("Fallback payload error", e);
+                }
+            }
+        }
+
+        setAllEmployees(employees);
+
+        if (found) {
+            setEmployee(found);
+            if (found.status === 'Onboarding') {
+                setIsOnboardingSetup(true);
+                setActiveTab('Setup Required');
+                setSetupFormData(found);
             }
         }
         setIsLoading(false);

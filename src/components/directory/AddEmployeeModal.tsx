@@ -69,14 +69,24 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
         e.preventDefault();
         setIsSubmitting(true);
 
-        const generatedShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId || Math.random().toString(36).substring(2, 9)}` : '';
+        const finalId = generatedId || Math.random().toString(36).substring(2, 9);
 
         // Auto generate ID and pass back to parent
         const newEmployee: Employee = {
             ...(formData as Employee),
-            id: generatedId || Math.random().toString(36).substring(2, 9),
+            id: finalId,
             status: activeTab === 'quick' ? 'Onboarding' : formData.status || 'Active'
         };
+
+        const fallbackPayload = btoa(encodeURIComponent(JSON.stringify({
+            firstName: newEmployee.firstName,
+            lastName: newEmployee.lastName,
+            personalEmail: newEmployee.personalEmail || formData.email || '',
+            department: newEmployee.department || 'HR',
+            jobTitle: newEmployee.jobTitle || ''
+        })));
+
+        const generatedShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${finalId}?fallback=${fallbackPayload}` : '';
 
         const targetEmail = activeTab === 'quick' ? formData.personalEmail : formData.email;
         if (sendOnboardingEmail && targetEmail) {
