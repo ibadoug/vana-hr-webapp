@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, Edit2, Save, XCircle, Link as LinkIcon, Check, Download, FileText, Folder, FolderPlus, ChevronLeft, Clock, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Employee } from '../../types/Employee';
+import CountrySelect from '../common/CountrySelect';
 
 interface Props {
     employee: Employee | null;
@@ -452,20 +453,12 @@ const EmployeeProfileModal: React.FC<Props> = ({ employee, employees, isOpen, on
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</label>
                                     {isEditing ? (
-                                        <select value={country} onChange={(e) => setCountry(e.target.value)} className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2">
-                                            <option value="">Select Country...</option>
-                                            <option value="Guatemala">Guatemala</option>
-                                            <option value="Argentina">Argentina</option>
-                                            <option value="Mexico">Mexico</option>
-                                            <option value="Honduras">Honduras</option>
-                                            <option value="Colombia">Colombia</option>
-                                            <option value="El Salvador">El Salvador</option>
-                                            <option value="Nicaragua">Nicaragua</option>
-                                            <option value="Costa Rica">Costa Rica</option>
-                                            <option value="Panama">Panama</option>
-                                            <option value="Spain">Spain</option>
-                                            <option value="United States">United States</option>
-                                        </select>
+                                        <CountrySelect
+                                            name="country"
+                                            value={country}
+                                            onChange={(e) => setCountry(e.target.value)}
+                                            className="w-full border-b border-gray-300 py-1 text-gray-900 focus:border-[#4F7BFE] outline-none transition-colors bg-gray-50 font-medium px-2"
+                                        />
                                     ) : (
                                         <p className="py-1 text-gray-900 font-medium px-2">{country || 'Not provided'}</p>
                                     )}

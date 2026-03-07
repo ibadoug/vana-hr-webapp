@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Upload, FileText, CheckCircle, ShieldAlert, Trash2, X, Folder, FolderPlus, ChevronLeft, Check, Download, Calendar as CalendarIcon, Clock, Send, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Employee, EmployeeDocument, TimeOffRequest } from '../types/Employee';
+import CountrySelect from '../components/common/CountrySelect';
 
 const PublicEmployeeProfile = () => {
     const { id } = useParams<{ id: string }>();
@@ -628,20 +629,14 @@ const PublicEmployeeProfile = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                                        <select name="country" value={setupFormData.country || ''} onChange={handleSetupChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
-                                            <option value="">Select Country...</option>
-                                            <option value="Guatemala">Guatemala</option>
-                                            <option value="Argentina">Argentina</option>
-                                            <option value="Mexico">Mexico</option>
-                                            <option value="Honduras">Honduras</option>
-                                            <option value="Colombia">Colombia</option>
-                                            <option value="El Salvador">El Salvador</option>
-                                            <option value="Nicaragua">Nicaragua</option>
-                                            <option value="Costa Rica">Costa Rica</option>
-                                            <option value="Panama">Panama</option>
-                                            <option value="Spain">Spain</option>
-                                            <option value="United States">United States</option>
-                                        </select>
+                                        <div className="relative z-10">
+                                            <CountrySelect
+                                                name="country"
+                                                value={setupFormData.country || ''}
+                                                onChange={handleSetupChange}
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none"
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">City</label>

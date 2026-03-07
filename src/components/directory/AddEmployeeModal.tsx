@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, FileText, Link as LinkIcon, Copy, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Employee } from '../../types/Employee';
+import CountrySelect from '../common/CountrySelect';
 
 interface Props {
     employees: Employee[];
@@ -364,20 +365,7 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                                    <select name="country" value={formData.country || ''} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none">
-                                        <option value="">Select Country...</option>
-                                        <option value="Guatemala">Guatemala</option>
-                                        <option value="Argentina">Argentina</option>
-                                        <option value="Mexico">Mexico</option>
-                                        <option value="Honduras">Honduras</option>
-                                        <option value="Colombia">Colombia</option>
-                                        <option value="El Salvador">El Salvador</option>
-                                        <option value="Nicaragua">Nicaragua</option>
-                                        <option value="Costa Rica">Costa Rica</option>
-                                        <option value="Panama">Panama</option>
-                                        <option value="Spain">Spain</option>
-                                        <option value="United States">United States</option>
-                                    </select>
+                                    <CountrySelect name="country" value={formData.country || ''} onChange={handleChange} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
