@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Employee } from '../types/Employee';
-import { Check, X, Clock, AlertCircle, CheckSquare, Heart, DollarSign, Calendar, UserPlus, UserMinus } from 'lucide-react';
+import { Check, X, Clock, AlertCircle, CheckSquare, Heart, DollarSign, Calendar, UserPlus, UserMinus, Plus } from 'lucide-react';
+import AddHolidays from '../components/admin/AddHolidays';
 
 const Admin = () => {
     const [pendingEmployees, setPendingEmployees] = useState<Employee[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Approvals');
+    const [showAddHolidays, setShowAddHolidays] = useState(false);
 
     const tabs = [
         { id: 'Approvals', label: 'Approvals', icon: CheckSquare },
@@ -181,7 +183,35 @@ const Admin = () => {
                         </>
                     )}
 
-                    {activeTab !== 'Approvals' && (
+                    {activeTab === 'Holidays' && (
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <Calendar className="text-[#4F7BFE]" size={20} />
+                                        Company Holidays
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Manage official holidays for your employees across different countries.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setShowAddHolidays(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#4F7BFE] text-white text-sm font-bold rounded hover:bg-[#3B5BDB] transition-colors shadow-sm"
+                                >
+                                    <Plus size={18} /> Add Holidays
+                                </button>
+                            </div>
+
+                            <div className="border border-dashed border-gray-300 rounded-xl p-12 flex flex-col items-center justify-center text-center bg-gray-50/50">
+                                <Calendar size={40} className="text-gray-400 mb-3" />
+                                <h4 className="text-lg font-semibold text-gray-700 mb-1">No Holidays Added</h4>
+                                <p className="text-gray-500 text-sm max-w-sm">You haven't configured any company holidays yet.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab !== 'Approvals' && activeTab !== 'Holidays' && (
                         <div className="border border-dashed border-gray-300 rounded-xl p-12 flex flex-col items-center justify-center text-center bg-white shadow-sm">
                             <AlertCircle size={40} className="text-gray-400 mb-3" />
                             <h4 className="text-lg font-semibold text-gray-700 mb-1">{activeTab}</h4>
@@ -192,6 +222,11 @@ const Admin = () => {
                     )}
                 </div>
             </div>
+
+            {/* Full Screen Holiday Modal */}
+            {showAddHolidays && (
+                <AddHolidays onClose={() => setShowAddHolidays(false)} />
+            )}
         </div>
     );
 };
