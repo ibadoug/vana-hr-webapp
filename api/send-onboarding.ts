@@ -3,7 +3,16 @@ export default async function handler(req: any, res: any) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { email, firstName, shareUrl } = req.body;
+    let body = req.body;
+    if (typeof body === 'string') {
+        try {
+            body = JSON.parse(body);
+        } catch (e) {
+            // Ignore parse error, it will fail the check below
+        }
+    }
+
+    const { email, firstName, shareUrl } = body || {};
 
     if (!email || !firstName || !shareUrl) {
         return res.status(400).json({ error: 'Missing email, firstName, or shareUrl' });
