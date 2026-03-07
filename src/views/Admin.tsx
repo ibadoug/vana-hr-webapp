@@ -13,8 +13,7 @@ const Admin = () => {
             const { data, error } = await supabase
                 .from('employees')
                 .select('*')
-                .eq('status', 'Pending Approval')
-                .order('created_at', { ascending: false });
+                .eq('status', 'Pending Approval');
 
             if (error) {
                 console.error('Error fetching pending approvals:', error);
