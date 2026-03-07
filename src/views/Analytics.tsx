@@ -89,10 +89,16 @@ const Analytics = () => {
         }
     }, []);
 
-    const chartData = useMemo(() => {
-        // Only active employees in selected departments
+    const { chartData, newHiresData } = useMemo(() => {
+        // Only active employees in selected departments for headcount
         const activeEmployees = employees.filter(emp => {
             if (emp.status === 'Inactive') return false;
+            const dept = emp.department || 'Unassigned';
+            return actualSelected.includes(dept);
+        });
+
+        // All employees in selected departments for new hires measurement
+        const departmentEmployees = employees.filter(emp => {
             const dept = emp.department || 'Unassigned';
             return actualSelected.includes(dept);
         });
@@ -101,21 +107,25 @@ const Analytics = () => {
         const end = new Date(endDate);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
-            return [];
+            return { chartData: [], newHiresData: [] };
         }
 
         const dataPoints = [];
+        const newHiresPoints = [];
         let current = new Date(start);
 
         while (current <= end) {
             let label = '';
+            let intervalStart = new Date(current);
             let intervalEnd = new Date(current);
 
             if (granularity === 'yearly') {
                 label = formatYear(current);
+                intervalStart = new Date(current.getFullYear(), 0, 1);
                 intervalEnd = new Date(current.getFullYear(), 11, 31);
             } else {
                 label = formatMonthYear(current);
+                intervalStart = new Date(current.getFullYear(), current.getMonth(), 1);
                 intervalEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0); // last day of month
             }
 
@@ -131,6 +141,18 @@ const Analytics = () => {
                 count
             });
 
+            // New Hires is anyone hired BETWEEN intervalStart and intervalEnd
+            const newHiresCount = departmentEmployees.filter(emp => {
+                const hDate = parseDate(emp.hireDate);
+                return hDate >= intervalStart && hDate <= intervalEnd;
+            }).length;
+
+            newHiresPoints.push({
+                label,
+                date: new Date(current),
+                count: newHiresCount
+            });
+
             // increment current
             if (granularity === 'yearly') {
                 current.setFullYear(current.getFullYear() + 1);
@@ -139,7 +161,7 @@ const Analytics = () => {
             }
         }
 
-        return dataPoints;
+        return { chartData: dataPoints, newHiresData: newHiresPoints };
     }, [employees, startDate, endDate, granularity, actualSelected]);
 
     // SVG parameters
@@ -148,6 +170,7 @@ const Analytics = () => {
     const padding = 60;
 
     const maxCount = Math.max(...chartData.map(d => d.count), 1);
+    const newHiresMaxCount = Math.max(...newHiresData.map(d => d.count), 1);
 
     // Points along the SVG
     const points = chartData.map((d, i) => {
@@ -161,6 +184,18 @@ const Analytics = () => {
         : '';
 
     const areaD = pathD ? `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z` : '';
+
+    const newHiresPoints = newHiresData.map((d, i) => {
+        const x = padding + (i * ((width - padding * 2) / Math.max(newHiresData.length - 1, 1)));
+        const y = height - padding - ((d.count / newHiresMaxCount) * (height - padding * 2));
+        return { x, y, count: d.count, label: d.label };
+    });
+
+    const newHiresPathD = newHiresPoints.length > 0
+        ? `M ${newHiresPoints[0].x} ${newHiresPoints[0].y} ` + newHiresPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')
+        : '';
+
+    const newHiresAreaD = newHiresPathD ? `${newHiresPathD} L ${newHiresPoints[newHiresPoints.length - 1].x} ${height - padding} L ${newHiresPoints[0].x} ${height - padding} Z` : '';
 
     return (
         <div className="p-8 max-w-6xl mx-auto space-y-6">
@@ -266,7 +301,7 @@ const Analytics = () => {
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-8">
                 <div className="border border-gray-100 rounded-lg bg-gray-50/30 p-4">
                     <div className="flex items-center gap-2 mb-4 px-4">
                         <div className="w-8 h-8 rounded bg-[#EEF2FF] flex items-center justify-center">
@@ -317,6 +352,68 @@ const Analytics = () => {
                                         <circle cx={p.x} cy={p.y} r="5" fill="#fff" stroke="#4F7BFE" strokeWidth="2" className="transition-all group-hover:r-[7px]" />
 
                                         {/* Tooltip emulation (shown on hover) */}
+                                        <g className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <rect x={p.x - 30} y={p.y - 45} width="60" height="30" rx="4" fill="#1F2937" />
+                                            <text x={p.x} y={p.y - 25} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold">{p.count}</text>
+                                        </g>
+                                    </g>
+                                ))}
+                            </svg>
+                        </div>
+                    ) : (
+                        <div className="h-[400px] flex items-center justify-center text-gray-500">
+                            No data available for this date range.
+                        </div>
+                    )}
+                </div>
+
+                <div className="border border-gray-100 rounded-lg bg-gray-50/30 p-4">
+                    <div className="flex items-center gap-2 mb-4 px-4">
+                        <div className="w-8 h-8 rounded bg-[#F0FDF4] flex items-center justify-center">
+                            <TrendingUp size={16} className="text-[#22C55E]" />
+                        </div>
+                        <h3 className="font-semibold text-gray-800">New Hires</h3>
+                    </div>
+
+                    {newHiresData.length > 0 ? (
+                        <div className="w-full overflow-x-auto overflow-y-hidden flex justify-center">
+                            <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="text-sm overflow-visible">
+                                {/* Grid Lines */}
+                                {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+                                    const y = padding + (height - padding * 2) * ratio;
+                                    const val = Math.round(newHiresMaxCount * (1 - ratio));
+                                    return (
+                                        <g key={`nh-grid-y-${i}`}>
+                                            <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#E5E7EB" strokeDasharray="4 4" />
+                                            <text x={padding - 10} y={y + 4} textAnchor="end" fill="#6B7280" fontSize="12">{val}</text>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Area */}
+                                <path d={newHiresAreaD} fill="#F0FDF4" opacity="0.5" />
+
+                                {/* Line */}
+                                <path d={newHiresPathD} fill="none" stroke="#22C55E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                                {/* Points and Labels */}
+                                {newHiresPoints.map((p, i) => (
+                                    <g key={`nh-point-${i}`} className="group">
+                                        {(newHiresPoints.length < 15 || i % Math.ceil(newHiresPoints.length / 10) === 0) && (
+                                            <text
+                                                x={p.x}
+                                                y={height - padding + 20}
+                                                textAnchor="middle"
+                                                fill="#6B7280"
+                                                fontSize="12"
+                                                transform={`rotate(-45, ${p.x}, ${height - padding + 20})`}
+                                            >
+                                                {p.label}
+                                            </text>
+                                        )}
+
+                                        <circle cx={p.x} cy={p.y} r="5" fill="#fff" stroke="#22C55E" strokeWidth="2" className="transition-all group-hover:r-[7px]" />
+
                                         <g className="opacity-0 group-hover:opacity-100 transition-opacity">
                                             <rect x={p.x - 30} y={p.y - 45} width="60" height="30" rx="4" fill="#1F2937" />
                                             <text x={p.x} y={p.y - 25} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold">{p.count}</text>
