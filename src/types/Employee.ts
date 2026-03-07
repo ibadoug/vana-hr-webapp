@@ -34,7 +34,7 @@ export interface Employee {
     location: string;
     jobTitle: string;
     reportingTo: string; // Name of manager
-    status: 'Active' | 'Inactive' | 'Onboarding';
+    status: 'Active' | 'Inactive' | 'Onboarding' | 'Pending Approval';
     lastDay?: string; // YYYY-MM-DD
     bankName?: string;
     bankAccountNumber?: string;

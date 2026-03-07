@@ -138,7 +138,7 @@ const Directory = () => {
 
     // Multi-criteria filter
     const filteredEmployees = useMemo(() => {
-        const baseEmployees = employees.filter(emp => emp.status !== 'Onboarding')
+        const baseEmployees = employees.filter(emp => emp.status !== 'Onboarding' && emp.status !== 'Pending Approval')
             .filter(emp => {
                 if (statusFilter === 'All') return true;
                 const currentStatus = emp.status || 'Active';
@@ -443,6 +443,7 @@ const Directory = () => {
                         employees={employees.filter(emp =>
                             emp.status !== 'Inactive' &&
                             emp.status !== 'Onboarding' &&
+                            emp.status !== 'Pending Approval' &&
                             (orgChartDepartment === 'All' || emp.department === orgChartDepartment)
                         )}
                         onNodeClick={(emp) => setSelectedEmployee(emp)}
