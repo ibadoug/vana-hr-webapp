@@ -320,9 +320,18 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
                                     <input required name="lastName" value={formData.lastName} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                 </div>
-                                <div className="md:col-span-2">
+                                <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Personal Email *</label>
                                     <input required type="email" name="personalEmail" value={formData.personalEmail} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Legal Entity *</label>
+                                    <select required name="legalEntity" value={formData.legalEntity} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none bg-white">
+                                        <option value="">Select Legal Entity</option>
+                                        <option value="Easy, S.A.">Easy, S.A.</option>
+                                        <option value="Vana Tech, S.A.">Vana Tech, S.A.</option>
+                                        <option value="Vana Mas S.A.">Vana Mas S.A.</option>
+                                    </select>
                                 </div>
 
                                 <div className="md:col-span-2 mt-2 pt-6 border-t border-gray-100">
@@ -376,6 +385,15 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Job Title *</label>
                                     <input required name="jobTitle" value={formData.jobTitle} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Legal Entity *</label>
+                                    <select required name="legalEntity" value={formData.legalEntity} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none bg-white">
+                                        <option value="">Select Legal Entity</option>
+                                        <option value="Easy, S.A.">Easy, S.A.</option>
+                                        <option value="Vana Tech, S.A.">Vana Tech, S.A.</option>
+                                        <option value="Vana Mas S.A.">Vana Mas S.A.</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
