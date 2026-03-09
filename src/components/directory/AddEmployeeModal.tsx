@@ -324,6 +324,40 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Personal Email *</label>
                                     <input required type="email" name="personalEmail" value={formData.personalEmail} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#4F7BFE] focus:border-[#4F7BFE] outline-none" />
                                 </div>
+
+                                <div className="md:col-span-2 mt-2 pt-6 border-t border-gray-100">
+                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 w-full">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                                                <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#4F7BFE] flex items-center justify-center">
+                                                    <LinkIcon size={16} />
+                                                </div>
+                                                Share Onboarding Link
+                                            </div>
+                                            <span className="text-xs text-gray-500 hidden sm:inline">Anyone with this link can access the onboarding form</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500 truncate select-all">
+                                                {typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : ''}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!generatedId) return;
+                                                    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : '';
+                                                    navigator.clipboard.writeText(shareUrl).then(() => {
+                                                        setCopiedShareLink(true);
+                                                        setTimeout(() => setCopiedShareLink(false), 2000);
+                                                    }).catch(() => { });
+                                                }}
+                                                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#4F7BFE] bg-[#EEF2FF] border border-transparent rounded-md hover:bg-[#DCE4FF] focus:outline-none transition-colors whitespace-nowrap"
+                                            >
+                                                {copiedShareLink ? <Check size={16} /> : <Copy size={16} />}
+                                                {copiedShareLink ? 'Copied' : 'Copy link'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -626,47 +660,15 @@ const AddEmployeeModal: React.FC<Props> = ({ employees, isOpen, onClose, onAdd }
                     <div className="flex justify-between items-center p-6 pt-4 border-t border-gray-100 shrink-0 bg-white w-full">
                         <div>
                             {activeTab === 'quick' && (
-                                <div className="flex flex-col gap-4 w-full">
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={sendOnboardingEmail}
-                                            onChange={(e) => setSendOnboardingEmail(e.target.checked)}
-                                            className="w-4 h-4 text-[#4F7BFE] bg-gray-100 border-gray-300 rounded focus:ring-[#4F7BFE] focus:ring-2 cursor-pointer"
-                                        />
-                                        <span className="text-sm font-medium text-gray-700 select-none">Send Email</span>
-                                    </label>
-
-                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 w-full max-w-lg">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                                <LinkIcon size={16} className="text-gray-500" />
-                                                Get link
-                                            </div>
-                                            <span className="text-xs text-gray-500 hidden sm:inline">Anyone with this link can view the public profile</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500 truncate select-all">
-                                                {typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : ''}
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    if (!generatedId) return;
-                                                    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : '';
-                                                    navigator.clipboard.writeText(shareUrl).then(() => {
-                                                        setCopiedShareLink(true);
-                                                        setTimeout(() => setCopiedShareLink(false), 2000);
-                                                    }).catch(() => { });
-                                                }}
-                                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#4F7BFE] bg-[#EEF2FF] border border-transparent rounded-md hover:bg-[#DCE4FF] focus:outline-none transition-colors whitespace-nowrap"
-                                            >
-                                                {copiedShareLink ? <Check size={16} /> : <Copy size={16} />}
-                                                {copiedShareLink ? 'Copied' : 'Copy link'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={sendOnboardingEmail}
+                                        onChange={(e) => setSendOnboardingEmail(e.target.checked)}
+                                        className="w-4 h-4 text-[#4F7BFE] bg-gray-100 border-gray-300 rounded focus:ring-[#4F7BFE] focus:ring-2 cursor-pointer"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700 select-none">Send onboarding email</span>
+                                </label>
                             )}
                         </div>
                         <div className="flex space-x-3">
